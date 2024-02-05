@@ -5,7 +5,8 @@ from .views import LocationView, CreateLocationView, LocationUser_view, CreateUs
 urlpatterns = [
     path('location', LocationView.as_view()),
     path('create-location', CreateLocationView.as_view()),
-    path('sign-in', LocationUser_view.as_view()),
-    path('create_user', CreateUser_view.as_view()),
-    # path('logout',LogoutUser_view.as_view(), include('knox.urls'))
+    path('login', LocationUser_view.as_view()),
+    path('create-user', CreateUser_view.as_view()),
+    # path('logout',LogoutUser_view.as_view()),
+    # path(logoutall', logoutall_view.as_view()),
 ]

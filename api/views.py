@@ -3,15 +3,21 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from knox.auth import TokenAuthentication
+from knox import views as knox_views
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.authtoken.models import Token
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import AllowAny
+from django.contrib.auth import login
 
-from .models import Locations, LocationUsers
+
+from .models import Locations, Custom_LocationUser
 from .helper import generate_location_id
 
 from .serializers import LocationsSerializer, CreateLocationsSerializer
-from .serializers import UserSerializer, CreateUsersSerializer
+from .serializers import UserSerializer, CreateUsersSerializer, LoginSerializer
 
 
 # # Create your views here.
@@ -70,68 +76,43 @@ class CreateLocationView(APIView):
 
 
 
-# this will the sign in portion of the user
-class LocationUser_view(generics.ListAPIView):
-    serializer_class = UserSerializer
+# SIGN IN PORTION
+class LocationUser_view(knox_views.LoginView):
+    permission_classes = (AllowAny,)
+    serializer_class = LoginSerializer
     
     def post(self, request, format=None):
         serializer = self.serializer_class(data=request.data)
 
-        if serializer.is_valid():
-            username = serializer.data.get('username')
-            password = serializer.data.get('password')
-
-        queryset = LocationUsers.objects.filter(username=username)
-        if not queryset.exists():#check if the user exist
-            return Response({"ERROR":"username does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.validated_data.get('user')  
+            login(request, user)
+            response = super().post(request, format=None)
+        else: 
+            return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = queryset[0]
-        if not check_password(password,user.password): # check the password with the saved pasword
-            return Response({"ERROR":"wrong password"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        
-        # Response(UserSerializer(userLocation).data, status=status.HTTP_200_OK) 
-    
+        return  Response(response.data, status=status.HTTP_200_OK)
 
-    queryset = LocationUsers.objects.all()
-    # Userserializer_class = UserSerializer
 
 #logs OUT THE USER
 class LogoutUser_view(APIView):
     pass   
 
 #CREAT USER
-class CreateUser_view(APIView):
+class CreateUser_view(CreateAPIView):
     serializer_class = CreateUsersSerializer
 
     def post(self, request, format=None):
         serializer = self.serializer_class(data=request.data)
 
-        if serializer.is_valid(): 
-
-            username = serializer.data.get('username')
-            password = serializer.data.get('password')
-
-            # validate email
-
-            if(len(password) < 6): # check password length
-                    return Response({"ERROR: PASSWORD TO SHORT"}, status=status.HTTP_400_BAD_REQUEST)
-
-            queryset = LocationUsers.objects.filter(username=username) # checks if theres a user with the same email
-
-            if queryset.exists(): # You cannot create a user with the same username
-                return  Response({"error":"username taken"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                name = serializer.data.get('name')
-                title = serializer.data.get('title')
-                superUser = serializer.data.get('superUser')
-                employee = serializer.data.get('employee')
-                token = Token.objects.create(user=username)
-                hashed_pwd = make_password(password) # Create a hash before saving password
-
-                userLocation = LocationUsers(username=username, password=hashed_pwd,
-                                     name=name, title=title, superUser=superUser, employee=employee) # this get the information from var above and add the to the DB Model
-                userLocation.save() # THIS SAVES THE INFORMATION
-            return  Response({"token": token.key, "user": UserSerializer(userLocation).data}, status=status.HTTP_201_CREATED) # return response with stating user created
+        if serializer.is_valid(raise_exception=True): 
+            serializer.save()
+            user = Custom_LocationUser.objects.get(username=request.data['username']) # locates the user
+            token = Token.objects.create(user=user)
         else:
-            return Response({"ERROR":"user not created"}, status=status.HTTP_400_BAD_REQUEST)
+            return  Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return  Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED) # return response with stating user created
+
+        
             

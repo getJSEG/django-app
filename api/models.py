@@ -2,24 +2,31 @@ from django.db import models
 import datetime
 import calendar
 import string
+from django.contrib.auth.models import AbstractUser
 from django import forms 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.authtoken.models import Token
 
 
 #FAT MODELS THIN VIEWS
-# this is django LOGIC
-
-class LocationUsers(models.Model):
-    # location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    username = models.CharField(max_length=100, null=False, blank=False)
+class Custom_LocationUser(AbstractUser):
+    username = models.EmailField(max_length=254, null=False, blank=False, unique=True)
     password = models.CharField(max_length=50, null=False, blank=False)
-    name = models.CharField(max_length=30)
-    title = models.CharField(max_length=10, null=False, blank=False)
-    superUser = models.BooleanField(null=True, blank=True)
-    active = models.BooleanField(default=False)
-    employee = models.BooleanField(null=True, blank=True)
+    full_name = models.CharField(max_length=30)
+    position = models.CharField(max_length=10, null=False, blank=False)
+    is_employee = models.BooleanField(null=True, blank=True)
+    create_on = models.DateTimeField(auto_now_add=True)
     status_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.username
+    
+    def has_module_perms(self, app_label):
+        return True
+
+    def has_perm(self, perm, obj=None):
+        return True
+
 
 # Create your models here.
 class Locations(models.Model):
@@ -27,7 +34,7 @@ class Locations(models.Model):
     location = models.CharField(max_length=60, unique=True)
     incharge = models.CharField(max_length=30)
     email = models.CharField(max_length=100, null=False, blank=False)
-    users = models.ForeignKey(LocationUsers, on_delete=models.CASCADE)
+    users = models.ForeignKey(Custom_LocationUser, on_delete=models.CASCADE)
     country = models.CharField(max_length=60, null=False, blank=False)
     address = models.CharField(max_length=255)
     profit_center = models.CharField(max_length=60)
