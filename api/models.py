@@ -6,6 +6,11 @@ from django.contrib.auth.models import AbstractUser
 from django import forms 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.authtoken.models import Token
+from .helper import generate_location_id
+
+
+# def generate_unique_location():
+
 
 
 #FAT MODELS THIN VIEWS
@@ -30,17 +35,37 @@ class Custom_LocationUser(AbstractUser):
 
 # Create your models here.
 class Locations(models.Model):
-    location_type = models.CharField(max_length=50)
+    WAREHOUSE = "warehosue"
+    RETAIL = "retail"
+    DISTRIBUTION_CENTER = "distribution center"
+
+    LOCATION_TYPE_CHOICES = [
+        ("WAREHOSUE", "warehosue"),
+        ("RETAIL", "retail"),
+        ("DISTRIBUTION_CENTER", "distributionCENTER")
+    ]
+
+    location_type = models.CharField(max_length=50, choices=LOCATION_TYPE_CHOICES, default=RETAIL)
     location = models.CharField(max_length=60, unique=True)
     incharge = models.CharField(max_length=30)
     email = models.CharField(max_length=100, null=False, blank=False)
-    users = models.ForeignKey(Custom_LocationUser, on_delete=models.CASCADE)
+    users = models.ManyToManyField(Custom_LocationUser)
     country = models.CharField(max_length=60, null=False, blank=False)
     address = models.CharField(max_length=255)
     profit_center = models.CharField(max_length=60)
     cost_center = models.CharField(max_length=60)
     status = models.CharField(max_length=25)
     status_date = models.DateTimeField(auto_now_add=True)
+    # auto generates code for location
+    def save(self, *args, **kwargs):
+
+        if not self.pk:
+            while True: 
+                    location_id = generate_location_id(self.location_type, self.country) # this creates a location ID
+                    if not Locations.objects.filter(location=location_id).exists(): # checks is location exist in DB
+                        break
+            self.location = location_id
+        super(Locations, self).save(*args, **kwargs) 
 
 class Catalogs(models.Model):
     location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)

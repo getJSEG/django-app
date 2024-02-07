@@ -1,23 +1,25 @@
 import random
+import string
 
 countryCode = {
-    'belize': 501,
-    'guatemala': 502,
-    'el salvador': 503,
-    'honduras':504,
-    'nicaragua': 505,
-    'costarica': 506,
-    'panama': 507,
-    'ecuador': 597,
-    'colombia': 57,
-    'mexico': 52,
-    'united state': 1,
-    'canada': 1,
+    'belize': '501',
+    'guatemala': '502',
+    'el salvador': '503',
+    'honduras':'504',
+    'nicaragua': '505',
+    'costarica': '506',
+    'panama': '507',
+    'ecuador': '597',
+    'colombia': '57',
+    'mexico': '52',
+    'united state': '1',
+    'canada': '1',
 }
 
 locationType = {
-    'store': 100,
-    'wharehouse': 200
+    'RETAIL': '100',
+    'WAREHOUSE': '200',
+    'DISTRIBUTION_CENTER': '300'
 }
 
 def generate_location_id(location_type, country):
@@ -27,14 +29,15 @@ def generate_location_id(location_type, country):
     for key, value in locationType.items():
         if location_type == key:
             location_number = value
+
     # get country code
     for key, value in countryCode.items():
         if country == key:
             location_number = location_number + value
     # create random number
-    code = random.choices(k=length)
+    code = ''.join(random.choices(string.ascii_lowercase, k=length))
     # join the code and 
-    location_number = location_number + code
+    location_number = location_number + str(code)
 
     return str(location_number)
 

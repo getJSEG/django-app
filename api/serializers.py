@@ -2,14 +2,15 @@ from rest_framework import serializers
 from .models import Locations, Custom_LocationUser
 from django.contrib.auth import authenticate
 
+from .helper import generate_location_id
 
 
-#LOGIN
+#get the USER information
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Custom_LocationUser
-        fields = ('username', 'password', 'full_name', 'position', 'is_employee', 'status_date')
-
+        fields = '__all__'
+#USER LOGIN
 class LoginSerializer(serializers.Serializer):
     # these are the only fileds the user will see and required to 
     username = serializers.EmailField()
@@ -44,7 +45,7 @@ class Update_UsersSerializer(serializers.ModelSerializer):
         pass
 
 
-#SIGNUP
+#USER SIGNUP
 class CreateUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Custom_LocationUser
@@ -69,21 +70,32 @@ class CreateUsersSerializer(serializers.ModelSerializer):
         return user
 
 
-
-
-
-
-# THIS IS FOR GETTIN THE LOCATION INFORMATION
-class LocationsSerializer(serializers.ModelSerializer):
+#get the USER information
+class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locations
-        fields = ('id', 'location_type', 'location', 'incharge', 'email', 'users', 'country',
-                  'address', 'profit_center', 'cost_center', 'status', 'status_date')
+        fields = '__all__'
 
-#THIS IS FOR CREATING LOCATION
-class CreateLocationsSerializer(serializers.ModelSerializer):
+#Creating LOCATION
+class CreateLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locations
-        fields = ('location_type', 'location', 'incharge', 'email', 'users', 'country',
-                 'address', 'profit_center', 'cost_center', 'status',
-                  'status_date')
+        fields = ('location_type', 'incharge', 'email', 'users', 'country',
+                 'address', 'status','profit_center', 'cost_center', 'status_date')
+
+        email = serializers.EmailField()
+        
+    def validate(self, attrs):
+        lower_email = attrs.get('email', '').strip().lower()
+
+        if Locations.objects.filter(email__iexact=lower_email).exists():
+            raise serializers.ValidationError("Duplicate")
+
+        return attrs
+    
+    def create(self, validated_data):
+        user = validated_data.pop('users') #removes the user from the dic and saves it to this variable
+        location = Locations.objects.create(**validated_data) # create the location with all information except the user model
+        location.users.set(user)
+        return location
+    
