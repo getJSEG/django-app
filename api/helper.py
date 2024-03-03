@@ -22,16 +22,18 @@ locationType = {
     'DISTRIBUTION_CENTER': '300'
 }
 
-def generate_location_id(location_type, country):
+def generate_store_number(location_type, country):
     location_number = ''
     length = 6
     # get the location type
+    # CHANGE THIS TO LOWER CASE
     for key, value in locationType.items():
         if location_type == key:
             location_number = value
 
     # get country code
     for key, value in countryCode.items():
+        # CHANGE THIS TO LOWER CASE
         if country == key:
             location_number = location_number + value
     # create random number

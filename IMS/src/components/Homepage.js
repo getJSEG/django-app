@@ -4,6 +4,7 @@ export default class HomePage extends Component {
     constructor(props) {
         super(props);
     }
+    // if you are not log in you should be redirectd
 
     render() {
         return (

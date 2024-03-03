@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Custom_LocationUser
+from .models import CustomLocationUser
 
 # Register your models here.
-admin.site.register(Custom_LocationUser)
+admin.site.register(CustomLocationUser)

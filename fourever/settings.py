@@ -38,7 +38,7 @@ SECRET_KEY = 'django-insecure-o5cp0zfxp%ke0u0bwjg=y99xng$)!#qqtlo00l*s4!ee4fu@0g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'rest_framework',
     'knox',
+    'sorl.thumbnail',
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -69,7 +70,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 ]
 
-AUTH_USER_MODEL = 'api.Custom_LocationUser'
+AUTH_USER_MODEL = 'api.CustomLocationUser'
 
 
 MIDDLEWARE = [

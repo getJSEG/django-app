@@ -4,36 +4,31 @@ import calendar
 import string
 from django.contrib.auth.models import AbstractUser
 from django import forms 
+import uuid
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.authtoken.models import Token
-from .helper import generate_location_id
+from .helper import generate_store_number
+from sorl.thumbnail import ImageField, get_thumbnail
 
+import os
 
-# def generate_unique_location():
+def get_upload_path(instance, filename):
+    old_filename = filename
+    filename = "%s%s" % ('product', old_filename)
+    return os.path.join('varients/', filename)
+    #TODO: Auto Generate path by 'varient/images/{product_name/{filename}}
+    # model = instance.album.model.__class__._meta
+    # name = model.verbose_name_plural.replace(' ', '_')
+    # print(model.db_returning_fields)
+    # return f'varient/images/{filename}'
 
-
+    
+    # model = instance.album.model.__class__._meta
+    # name = model.verbose_name_plural.replace(' ', '_')
+    # return f'{name}/images/{filename}'
+    # return f'product/images'
 
 #FAT MODELS THIN VIEWS
-class Custom_LocationUser(AbstractUser):
-    username = models.EmailField(max_length=254, null=False, blank=False, unique=True)
-    password = models.CharField(max_length=50, null=False, blank=False)
-    full_name = models.CharField(max_length=30)
-    position = models.CharField(max_length=10, null=False, blank=False)
-    is_employee = models.BooleanField(null=True, blank=True)
-    create_on = models.DateTimeField(auto_now_add=True)
-    status_date = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.username
-    
-    def has_module_perms(self, app_label):
-        return True
-
-    def has_perm(self, perm, obj=None):
-        return True
-
-
-# Create your models here.
 class Locations(models.Model):
     WAREHOUSE = "warehosue"
     RETAIL = "retail"
@@ -44,12 +39,10 @@ class Locations(models.Model):
         ("RETAIL", "retail"),
         ("DISTRIBUTION_CENTER", "distributionCENTER")
     ]
-
     location_type = models.CharField(max_length=50, choices=LOCATION_TYPE_CHOICES, default=RETAIL)
-    location = models.CharField(max_length=60, unique=True)
+    store_number = models.CharField(max_length=60, unique=True)
     incharge = models.CharField(max_length=30)
     email = models.CharField(max_length=100, null=False, blank=False)
-    users = models.ManyToManyField(Custom_LocationUser)
     country = models.CharField(max_length=60, null=False, blank=False)
     address = models.CharField(max_length=255)
     profit_center = models.CharField(max_length=60)
@@ -61,11 +54,37 @@ class Locations(models.Model):
 
         if not self.pk:
             while True: 
-                    location_id = generate_location_id(self.location_type, self.country) # this creates a location ID
-                    if not Locations.objects.filter(location=location_id).exists(): # checks is location exist in DB
+                    store_num = generate_store_number(self.location_type, self.country) # this creates a location ID
+                    if not Locations.objects.filter(store_number=store_num).exists(): # checks is location exist in DB
                         break
-            self.location = location_id
-        super(Locations, self).save(*args, **kwargs) 
+            self.store_number = store_num
+        super(Locations, self).save(*args, **kwargs)
+
+#USERS FOR LOCATIONS
+class CustomLocationUser(AbstractUser):
+    # TODO: MAKE THE ID AUTO GENEREATE RANDOM ID
+    username = models.EmailField(max_length=254, null=False, blank=False, unique=True)
+    password = models.CharField(max_length=50, null=False, blank=False)
+    position = models.CharField(max_length=10, null=False, blank=False)
+    is_employee = models.BooleanField(null=True, blank=True)
+    create_on = models.DateTimeField(auto_now_add=True)
+    status_date = models.DateTimeField(auto_now_add=True)
+    location = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    avatar = models.ImageField(upload_to='user', default='user/user.jpeg', blank=True)
+
+    # def save(self, *args, **kwargs):
+    #     if self.avatar:
+    #         self.avatar = get_thumbnail(self.avatar, '320x320', quality=99, format='JPEG')
+    #     super(CustomLocationUser, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.username
+    
+    def has_module_perms(self, app_label):
+        return True
+
+    def has_perm(self, perm, obj=None):
+        return True
 
 class Catalogs(models.Model):
     location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
@@ -84,17 +103,6 @@ class UserActivity(models.Model):
     action_type = models.CharField(max_length=30)
     action_on = models.DateTimeField(max_length=60)
     actioned_by = models.CharField(max_length=60)
-
-# Products
-class Products(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    create_on = models.DateTimeField(auto_now_add=True)
-    catalog_id = models.ForeignKey(Catalogs, on_delete=models.CASCADE)
-    product = models.CharField(max_length=60)
-    product_acronym = models.CharField(max_length=10, null=True) 
-    brand = models.CharField(max_length=60)
-    status = models.ImageField(max_length=25)
-    status_date = models.DateTimeField(auto_now_add=True) 
 
 class Customer(models.Model):
     location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
@@ -153,41 +161,85 @@ class Supplier(models.Model):
 class PurchaseOrder(models.Model):
     location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
-    cost_center = models.CharField(max_length=25)
+    cost_center = models.CharField(max_length=25, blank=True)
     created_by = models.CharField(max_length=100)
     approved_by = models.CharField(max_length=100)
     status = models.CharField(max_length=25)
     status_date = models.DateTimeField(auto_now_add=True)
 
-# This is PRODUCT MANAGEMENT
-# Product varient colors
-class Color(models.Model):
-    color = models.ImageField()
-    description = models.CharField(max_length=100)
-
+# PRODUCTS
+class Products(models.Model):
+    # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    name = models.CharField(max_length=60)
+    brand = models.CharField(max_length=60)
+    create_on = models.DateTimeField(auto_now_add=True)
+    catalog_id = models.ForeignKey(Catalogs, on_delete=models.CASCADE, null=True, blank=True)
+    product_acronym = models.CharField(max_length=10, null=True, blank=True) 
+    status = models.ImageField(max_length=25, null=True, blank=True)
+    status_date = models.DateTimeField(auto_now_add=True)
+ 
+class ImageAlbum(models.Model):
+    def default(self):
+        return self.images.filter(default=True).first()
+    def thumnail(self):
+        return self.images.filter(width__lt=100, length_lt=100)
+    
 # Product varient images for males and female models
-class Images(models.Model):
-    color_id = models.ForeignKey(Color, on_delete=models.CASCADE)
-    item_images = models.ImageField()
+class VarientImages(models.Model):
+    # color_id = models.ForeignKey(VarientColors, on_delete=models.CASCADE)
+    # varient = models.ForeignKey(Varients, on_delete=models.CASCADE)
+    # product_id = models.ForeignKey(Products, on_delete=models.CASCADE, null=True, blank=True)
+    # item_images = models.ImageField(upload_to=get_upload_path) # this will link to the stoarage x
+    image = models.ImageField(upload_to=get_upload_path)
+    album = models.ForeignKey(ImageAlbum, related_name='images', on_delete=models.CASCADE)
 
 # product Varients
 class Varients(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
+    product_id = models.ForeignKey(Products, on_delete=models.CASCADE, null=True, blank=True)
     create_on = models.DateTimeField(auto_now_add=True)
-    item_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     vendor_sku = models.CharField(max_length=100)
-    item_images = models.ForeignKey(Images, on_delete=models.CASCADE)
-    type_color = models.ForeignKey(Color, on_delete=models.CASCADE)
     size = models.CharField(max_length=10)
+    units = models.IntegerField()
     sku = models.CharField(max_length=100)
-    uom = models.CharField(max_length=100)
-    supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    album = models.OneToOneField(ImageAlbum, related_name='model', on_delete=models.CASCADE, null=True)
+    # item_images = models.ManyToManyField(VarientImages) #change this ti varient_images and change this to many to many relashio ship
+    # type_color = models.ForeignKey(VarientColors, on_delete=models.CASCADE) # change this to varient_color
+    # uom = models.CharField(max_length=100)#this will be DELETED THIS STANDS FOR (UNITS OF MESUREMENTS)
+    # supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     purchase_price = models.DecimalField(max_digits=8, decimal_places=2)
     list_price = models.DecimalField(max_digits=8, decimal_places=2)
-    storage_location = models.CharField(max_length=100)
+    storage_location = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=25)
-    status_date = models.DateTimeField()
+    status_date = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def cal_purchase_price(self):
+        price = self.units * self.list_price
+        return price
+
+# Product varient colors
+class VarientColors(models.Model):
+    varient = models.ForeignKey(Varients, on_delete=models.CASCADE)
+    color = models.ImageField()
+    description = models.CharField(max_length=100)
+    # varient_id = models.ForeignKey(Varients, on_delete=models.CASCADE, null=True, blank=True)
+    # product_id = models.ForeignKey(Products, on_delete=models.CASCADE, null=True, blank=True)
+
+
+
+
+
+
+
+
+
+
+
+
 
 class PurchaseOrderLines(models.Model):
     location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
