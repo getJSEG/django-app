@@ -1,59 +1,9 @@
 body{
     padding: 0;
     margin: 0;
-    background: #f5e4e8 !important;
-    margin: 0; 
-    height: 100%;
-    overflow: hidden !important;
 }
 
 
 .navigation{
     background: #ffafc3;
 }
-
-/* this is sign in css */
-.signinForm{
-    margin: auto;
-    padding: 10px;
-    height: 2em;
-    border: 1px solid red;
-}
-
-.exrra{
-    min-height: 100vh;
-    height: 100vh;
-    padding: 0;
-    margin: 0 auto;
-}
-
-.sign-in-img-con{
-    height: 100vh;
-    overflow: hidden;
-}
-
-.form-container{
-    border: 1px solid red;
-}
-
-.clear{
-    display: inline-block;
-    width: 70%;
-    margin: auto;
-    clear: both;
-}
-
-@media only screen and (max-width: 770px) {
-    .align-text-center {
-      text-align:center;
-    }
-
-    .center-sm{
-        margin: auto;
-        width: 50%;
-    }
-    .clear{
-        display: block;
-    }
-
-  }

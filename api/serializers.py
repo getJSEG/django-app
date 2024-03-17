@@ -14,44 +14,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomLocationUser
         fields = '__all__'
 
-################################ USER ####################################
-##########################################################################     
-#USER LOGIN
-class LoginSerializer(serializers.Serializer):
-    # these are the only fileds the user will see and required to 
-    username = serializers.EmailField()
-    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
-
-    def validate(self, attrs):
-        username = attrs.get('username').lower()
-        password = attrs.get('password')
-
-        if not username or not password: # check is pass ans username are not empty
-            raise serializers.ValidationError('please provide correct email and password')
-               
-        if not CustomLocationUser.objects.filter(username=username).exists(): # check if the user exist
-            raise serializers.ValidationError('User Not Found')
- 
-        user = authenticate(request=self.context.get('request'), username=username, password=password)
-        if not user: # throw error if information does not match
-            raise serializers.ValidationError('please provide correct email and password')
-
-        attrs['user'] = user
-        return attrs
-
-# update user information
-class UpdateUsersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model= CustomLocationUser
-        fields = ('first_name', 'last_name', 'position', 'is_employee', 'status_date', 'password', 'avatar')
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop('password')
-        if password:
-            instance.set_password(password)
-        instance = super().update(instance, validated_data)
-        return instance
-
 #USER SIGNUP
 class CreateUsersSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,6 +40,46 @@ class CreateUsersSerializer(serializers.ModelSerializer):
 
         # user.locations.set(location)
         return user
+
+################################ USER ####################################
+##########################################################################     
+#USER LOGIN
+class LoginSerializer(serializers.Serializer):
+    # these are the only fileds the user will see and required to 
+    username = serializers.EmailField()
+    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
+
+    def validate(self, attrs):
+        username = attrs.get('username').lower()
+        password = attrs.get('password')
+
+        if not username or not password: # check is password and username are not empty
+            raise serializers.ValidationError('please provide correct email and password')
+        
+               
+        if not CustomLocationUser.objects.filter(username=username).exists(): # check if the user exist
+            raise serializers.ValidationError('wrong Email or Password')
+ 
+        user = authenticate(request=self.context.get('request'), username=username, password=password)
+        
+        if not user: # throw error if information does not match
+            raise serializers.ValidationError('wrong Email or Password')
+
+        attrs['user'] = user
+        return attrs
+
+# update user information
+class UpdateUsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= CustomLocationUser
+        fields = ('first_name', 'last_name', 'position', 'is_employee', 'status_date', 'password', 'avatar')
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password')
+        if password:
+            instance.set_password(password)
+        instance = super().update(instance, validated_data)
+        return instance
     
 ################################ LOCATION ################################
 ##########################################################################

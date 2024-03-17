@@ -1,0 +1,135 @@
+#navigation{
+    background-color: white;
+    box-shadow: 0 11px 12px #333;
+    z-index: 1;
+    position: fixed;
+    display: inline-block;
+    bottom: 0px;
+    width: 100%;
+    height: 5em;
+    display: inline;
+    text-align: center;
+}
+
+/* .active {
+    background-color: red;
+} */
+
+li{
+    list-style-type: none;
+    display: inline-flex;
+    text-align: center;
+    list-style-type: none;
+}
+
+.icon-name{
+    color: #8185a1;
+    list-style-type: none;
+}
+
+.li-container{
+    text-decoration: none;
+    padding: 1em;
+}
+
+.nav-links{ text-decoration: none; }
+
+.nav-links p {
+    font-size: 8pt;
+    padding-top: .5em;
+}
+.nav-icon{
+    width: 1.3em;
+    height: 1.3em;
+}
+
+.active .nav-i-c-a-c{
+    stroke: #ec87a0;
+    color: #ec87a0;
+}
+
+.nav-i-c-a-c{
+    stroke:#8185a1;
+    color: #8185a1;
+}
+
+
+.avatar, .logout-container, .logout-link, .avatar-container{
+    display: none;
+}
+
+
+#menu-icon{ width: 1.5em; height: 1.3em; }
+
+@media only screen and (min-width: 770px) {
+    #navigation{
+        background-color: #ffafc3;
+        z-index: 1;
+        position:fixed;
+        display: inline-block;
+        box-shadow: -8px 0 12px #333;
+        top: 0;
+        left: 0;
+        width: 6em;
+        height: 100vh;
+    }
+
+    .li-container{
+        width: 5em;
+        height: 5em;
+        padding: 1em;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .nav-i-c-a-c{
+        stroke:#fff;
+        color: #fff;
+    }
+
+    .active .nav-i-c-a-c{
+        stroke: #262626;
+        color: #262626;
+    }
+    
+
+    .avatar-container{ display: inline-block;  }
+    .avatar{
+        width: 75px;
+        height: 75px;
+        border-radius: 50%;
+        border: 1px solid red;
+        display: inline-block;
+        margin: 2em 0;
+
+    }
+
+    .logout-name{
+        font-size: 10pt;
+        color: #333;
+        text-align: center;
+        line-height: 1em;
+    }
+
+    .icon-name{
+        color: white;
+        list-style-type: none;
+    }
+
+    .logout-container{
+        position:absolute;
+        bottom: 20px;
+        left: 5px;
+        display:inline-block;
+    }
+
+    .logout-link{
+        text-decoration: none;
+        color: white;
+        line-height: 15px;
+        overflow: hidden;
+        display:inline-block;
+    }
+    
+
+}

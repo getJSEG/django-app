@@ -1,0 +1,129 @@
+#varients{
+    height: 100vh;
+    background-color: #F4F4F4;
+}
+
+#varients h4{
+    font-size: 20pt;
+    font-weight: 600;
+    padding: .25em;
+}
+
+.varient-list-container{
+    padding: 0;
+    margin: 0;
+    display: flex;
+    margin: .5em;
+    justify-content: center;
+}
+
+.varient-item-container{
+    box-shadow: 0px 0px 13px -4px rgba(129,133,161,0.83);
+    margin: .25em .5em;
+    display: inline-flex;
+    width: 80%;
+    border-radius: 1em;
+}
+
+.varient-lnk{
+    width: 100%;
+    text-decoration: none;
+    display: block;
+}
+
+.varient-img-container{
+    width: 100%;
+    height: 10em;
+    background-color: rgb(187, 191, 212);
+    display: flex;
+    justify-content: center;
+    border-radius: 1em 1em 0 0;
+}
+
+.varient-name{
+    font-size: 15pt;
+    color:#333;
+    text-transform: uppercase;
+    font-weight: 600;
+    text-align: left;
+    padding-left: .5em;
+}
+
+.varient-information-con{
+    text-align: left;
+    display: flex;
+}
+.varient-info-overview {
+    display: inline;
+}
+
+.varient-in{
+    padding-left: 1em;
+    color: #8185a1;
+    font-size: 10pt;
+    font-weight: 500;
+}
+
+.info{
+    color: #333;
+    font-weight: 700;
+}
+
+
+.varient-nav-buttons{
+    padding: 1em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+}
+.varient-title{
+    color: #4F5366;
+    font-size: 25pt;
+}
+
+
+.create-varient-name{
+    background-color: #eda4b6;
+    color: #fff;
+    text-align: center;
+    border-radius: .85em;
+    padding: .15em;
+    display: flex;
+}
+
+.create-varient-detail{
+    display: none;
+}
+
+
+@media only screen and (min-width: 770px) {
+    #varients{
+        padding-left: 7em;
+        padding-right: 1em;
+    }
+    
+    .create-varient-detail{
+        display: inline-block;
+    }
+
+    .create-varient-name{
+        display: inline-block;
+        background-color: #eda4b6;
+        position: relative;
+        display: flex;
+        right: 1em;
+        color: #fff;
+        font-weight: 500;
+        text-align: center;
+        border-radius: .5em;
+        width: 10em;
+        padding: .25em;
+    }
+    .create-varient-name span{
+        border-left: 1px solid #e996aa;
+        padding-left: .25em;
+        margin: auto auto auto 0;
+    }
+    
+}

@@ -1,0 +1,14 @@
+.dashboard-container{
+    position: relative;
+    left:0;
+}
+
+
+@media only screen and (min-width: 770px) {
+    #dashboard-container{
+        width: 85%;
+        position: relative;
+        left:7em;
+        overflow: hidden;
+    }
+}
