@@ -23,8 +23,19 @@
   },
   "dependencies": {
     "@babel/plugin-transform-private-property-in-object": "^7.23.4",
+    "@babel/preset-typescript": "^7.23.3",
     "@mui/icons-material": "^5.14.19",
     "@mui/material": "^5.14.19",
-    "react-router-dom": "^6.20.0"
+    "@redux-devtools/extension": "^3.3.0",
+    "axios": "^1.6.8",
+    "bootstrap": "^5.3.3",
+    "css-loader": "^6.10.0",
+    "js-cookie": "^3.0.5",
+    "react-redux": "^9.1.0",
+    "react-router-dom": "^6.20.0",
+    "redux": "^5.0.1",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^3.1.0",
+    "style-loader": "^3.3.4"
   }
 }

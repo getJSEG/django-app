@@ -11,7 +11,8 @@ import {
 
  const initialState = {
     varients: null,
-    loading: true
+    loading: true,
+    varientCreated: false
  }
 
 
@@ -20,7 +21,17 @@ export default function(state = initialState, action) {
 
     switch(type) { 
         case CREATE_VARIENT_SUCCESS:
+            return {
+                ...state,
+                varientCreated: payload,
+                loading: false
+            }
         case CREATE_VARIENT_FAIL:
+            return {
+                ...state,
+                varientCreated: payload,
+                loading: true
+            }
         case LOAD_VARIENTS_SUCCESS:
             return {
                 ...state,

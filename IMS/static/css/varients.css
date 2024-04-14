@@ -96,6 +96,13 @@
     display: none;
 }
 
+#varient-form-popup{
+    top: 10em;
+}
+
+.varient-Form-close{
+    display: none;
+}
 
 @media only screen and (min-width: 770px) {
     #varients{

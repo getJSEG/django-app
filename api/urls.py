@@ -1,35 +1,40 @@
 from django.urls import path, re_path
-# from knox.views import LogoutView, LogoutAllView
 
-
-from .views import CreateLocationView, LocationView # Locations
-from .views import LocationUserLoginView, CreateLocationUserView, UpdateUserinformationView, GetCSRFToken, LocationserLogoutView, GetUserProfileView, CheckAuthenticatedView# Location User
-from .views import CreateProductView, GetProductsView, UpdateProductView # Product
-from .views import CreateVarientView, GetVarientView, UpdateVarientView, DeleteMultipleVarientView, GetImages # Varient
+from .views import product, varients, location, user, session_auth, point_of_purchase, discount
 
 urlpatterns = [
+    #Auth
+    path('session', session_auth.GetCSRFToken.as_view()),
+    path('authenticated', session_auth.CheckAuthenticatedView.as_view()),
     #user 
-    path('signup', CreateLocationUserView.as_view()),
-    path('session', GetCSRFToken.as_view()),
-    path('login', LocationUserLoginView.as_view()),
-    path('logout', LocationserLogoutView.as_view()),
-    path('profile', GetUserProfileView.as_view()),
-    path('authenticated', CheckAuthenticatedView.as_view()),
-    # path('logout-all', LogoutAllView.as_view()),
-    path('update/<str:pk>', UpdateUserinformationView.as_view()),
+    path('signup', user.CreateUserView.as_view()),
+    path('employee/create', user.CreateEmployeeView.as_view()),
+    path('login', user.UserLoginView.as_view()),
+    path('logout', user.LocationserLogoutView.as_view()),
+    path('profile', user.GetUserProfileView.as_view()),
+    path('user/update', user.UpdateUserinformationView.as_view()),
     #locations
-    path('create-location', CreateLocationView.as_view()),
-    path('location', LocationView.as_view()),
+    path('location/create', location.CreateLocationView.as_view()),
+    path('location', location.LocationView.as_view()),
+    path('location/delete/<str:pk>', location.DeleteLocationView.as_view()),
+    path('location/update', location.UpdateLocationView.as_view()),
     #products
-    path('createproduct', CreateProductView.as_view()),
-    path('products', GetProductsView.as_view()),
-    path('products/update/<str:pk>', UpdateProductView.as_view()),
+    path('products', product.ProductInventoryView.as_view()),
+    path('product/create', product.CreateProductView.as_view()),
+    path('product/update/<str:pk>', product.UpdateProductView.as_view()),
+    path('product/delete/<str:product_id>', product.DeleteProductView.as_view()),
     #varients
-    path('product/<str:pk>/createvarient', CreateVarientView.as_view()), # creating varient on the product by getting pk
-    path('product/<str:product_id>/varients', GetVarientView.as_view()), # we get all of the varient base on the product
-    path('product/<str:product>/varient/<str:pk>', UpdateVarientView.as_view()), # update varient by the barient pk(primary key)
-    path('product/<str:pk>/varients/delete', DeleteMultipleVarientView.as_view()), # Delete Mutiple Varient
-    # path('product/<str:product>/varient/delete/<str:varient>', DeleteMultipleVarientView.as_view()), # Delete Single Varient
-    path('getImages', GetImages.as_view())
+    path('product/<str:pk>/createvarient', varients.CreateVarientView.as_view()),                       # creating varient on the product by getting pk
+    path('product/<str:product_id>/varients', varients.GetVarientView.as_view()),                       # we get all of the varient base on the product
+    path('product/<str:product>/varient/<str:pk>', varients.UpdateVarientView.as_view()),               # update varient by the barient pk(primary key)
+    path('product/<str:pk>/varients/delete', varients.DeleteMultipleVarientView.as_view()),             # Delete Mutiple Varient
+    path('varient/<str:pk>/update', varients.UpdateVarientView.as_view()),
+    #Point of purchase system
+    path('pos', point_of_purchase.SKUSearch.as_view()),
+    path('pos/transaction', point_of_purchase.POSTransaction.as_view()),
+    #DISCOUNT
+    path('put/discount', discount.GetDiscountView.as_view()),
+    path('create/discount', discount.CreateDiscountView.as_view()),
+    path('delete/discount/<str:pk>', discount.DeleteDiscount.as_view()),
 
 ]

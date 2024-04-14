@@ -11,16 +11,19 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-import os
-import mimetypes
 from datetime import timedelta
 from rest_framework.settings import api_settings
+from django.core.management.utils import get_random_secret_key
+# import dj_database_url ##INSTALL THIS Library
+import mimetypes
+# import sys #INSTALL THIS Library
+import pyrebase
+import os
 
 mimetypes.add_type("text/css", ".css", True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # EMAIL_USE_TLS = EMAIL_USE_TLS
 # EMAIL_HOST = EMAIL_HOST
@@ -32,12 +35,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
+#This will be UNCOMENTED for Production
+# SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-o5cp0zfxp%ke0u0bwjg=y99xng$)!#qqtlo00l*s4!ee4fu@0g'
 
+# DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = os.getenv("DEBUG", "False") == "True"
 DEBUG = True
 
+
+#This will be UNCOMENTED for Production
+# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
 ALLOWED_HOSTS = ['*']
 
 
@@ -52,9 +63,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        #'knox.auth.TokenAuthentication',
-        #'rest_framework.authentication.BasicAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ]
 }
@@ -63,7 +71,6 @@ INSTALLED_APPS = [
     "IMS",
     'api.apps.ApiConfig',
     'rest_framework',
-    'knox',
     'sorl.thumbnail',
     'corsheaders',
     'django.contrib.staticfiles',
@@ -75,7 +82,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 ]
 
-AUTH_USER_MODEL = 'api.CustomLocationUser'
+AUTH_USER_MODEL = 'api.CustomUser'
 
 
 MIDDLEWARE = [
@@ -109,16 +116,6 @@ TEMPLATES = [
         },
     },
 ]
-
-REST_KNOX = {
-  'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
-  'AUTH_TOKEN_CHARACTER_LENGTH': 64,
-  'TOKEN_TTL': timedelta(hours=10),
-  'USER_SERIALIZER': 'api.serializers.UserSerializer',
-  'TOKEN_LIMIT_PER_USER': None,
-  'AUTO_REFRESH': False,
-  'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT,
-}
 
 
 WSGI_APPLICATION = 'fourever.wsgi.application'
@@ -171,14 +168,35 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "static"),
+#     os.path.join(BASE_DIR, "media/static"),
+# ]
 
-# STATIC_ROOT = os.path.join(BASE_DIR, 'IMS/staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'
+
+MEDIAFILES_DIRS = [
+    os.path.join(BASE_DIR, "media")
+]
+
+#################### django resize ###############################
+DJANGORESIZED_DEFAULT_SIZE = [1000, 1500]
+DJANGORESIZED_DEFAULT_SCALE = 0.5
+DJANGORESIZED_DEFAULT_QUALITY = 75
+DJANGORESIZED_DEFAULT_KEEP_META = True
+DJANGORESIZED_DEFAULT_FORCE_FORMAT = 'JPEG'
+DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
+DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
+#################### django resize ###############################
+
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 

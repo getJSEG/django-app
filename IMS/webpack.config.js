@@ -16,6 +16,10 @@ module.exports = {
           loader: "babel-loader",
         },
       },
+      {
+        test: /\.css$/,
+          use: ['style-loader', 'css-loader']
+      }
     ],
   },
   optimization: {
@@ -23,7 +27,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV' : JSON.stringify('production')
+      'process.env.NODE_ENV' : JSON.stringify('development')
     })
   ],
 };

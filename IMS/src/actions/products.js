@@ -10,7 +10,6 @@ import {
     DELETE_PRODUCT_FAIL 
 
 } from './types';
-import { response } from 'express';
 
 
 export const load_product = () => async dispatch => {
@@ -37,41 +36,48 @@ export const load_product = () => async dispatch => {
         })
 
     }catch(err) {
-        dispatch({ type:LOAD_PRODUCTS_FAIL })
+        dispatch({ type: LOAD_PRODUCTS_FAIL })
     }
 }
 
 export const create_product = (product_name, product_brand) => async dispatch => {
-    // const requestOptions = {
-    //     method: "POST",
-    //     headers: {
-    //         'Accept': 'application/json',
-    //         "Content-Type": "application/json",
-    //         "X-CSRFToken": Cookies.get("csrftoken") // this will get cookie
-    //     },
-    //     mode: 'same-origin',
-    //     body: JSON.stringify({ name: product_name, brand: product_brand }),
-    // };
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            "Content-Type": "application/json",
+            "X-CSRFToken": Cookies.get("csrftoken") // this will get cookie
+        },
+        mode: 'same-origin',
+        body: JSON.stringify({ name: product_name, brand: product_brand }),
+    };
 
-    // try{
-    //     await fetch('/api/createproduct',requestOptions)
-    //     .then(response => {
-    //         if(response.status >= 200 && response.status <= 299){
-    //             return esponse.json()
-    //         }
-    //     })
-    //     .then( data => {
-    //         dispatch({
-    //             type:CREATE_PRODUCT_SUCCESS,
-    //             payload: data
-    //         })
-    //     })
+    try{
+        await fetch('/api/createproduct',requestOptions)
+        .then(response => {
+            if(response.status >= 200 && response.status <= 299){
+                console.log(response)
+                return response.json()
+            }else{
+                dispatch({
+                    type: CREATE_PRODUCT_FAIL,
+                    payload: false
+                })
+            }
+        })
+        .then( data => {
+            dispatch({
+                type:CREATE_PRODUCT_SUCCESS,
+                payload: true
+            })
+        })
 
-    // }catch(err){
-    //     dispatch({
-    //         type: CREATE_PRODUCT_FAIL
-    //     })
-    // }
+    }catch(err){
+        dispatch({
+            type: CREATE_PRODUCT_FAIL,
+            payload: false
+        })
+    }
 
 }
 

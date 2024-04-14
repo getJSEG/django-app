@@ -41,8 +41,42 @@ import Cookies from 'js-cookie';
 
  }
 
+ export const create_varient = (product_id, name, size, units, purchasePrice, listedPrice) => async dispatch => {
 
- export const create_varient = () => async dispatch => {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            "Content-Type": "application/json",
+            "X-CSRFToken": Cookies.get("csrftoken") // this will get cookie
+        },
+        mode: 'same-origin',
+        body: JSON.stringify({ name: name, size: size, units: units, purchase_price: purchasePrice, list_price:listedPrice }),
+    };
+
+    try{
+        await fetch(`/api/product/${product_id}/create-varient`, requestOptions)
+        .then( response => { 
+            if (response.status >= 200 && response.status <= 299) { 
+                return response.json()  
+            } else{
+                dispatch({
+                    type: CREATE_VARIENT_FAIL,
+                    payload: false
+                })
+            }
+        })
+        .then( data =>  {
+            dispatch({
+                type: CREATE_VARIENT_SUCCESS,
+                payload: true
+            })
+        })
+
+    }catch(err) {
+        dispatch({ type:CREATE_VARIENT_FAIL })
+    }
+    
 
  }
  

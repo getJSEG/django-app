@@ -1,1 +1,2 @@
-import App from "./components/app";
+import App from "./app";
+import 'bootstrap/dist/css/bootstrap.min.css'; 

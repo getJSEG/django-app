@@ -39,7 +39,6 @@ export default class App extends Component {
                             <Route exact path='/menu' element={ <Menu /> } />
                             <Route exact path='/search' element={ <Search /> } />
                             <Route exact path='/sales' element={ <Sales /> } />
-                            <Route exact path='/create-product' element={ <CreateProductForm /> } />
                             <Route exact path='/product/:id/varients' element={ <Varients /> } />
                         </Route>
 

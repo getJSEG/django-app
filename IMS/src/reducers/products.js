@@ -11,7 +11,10 @@ import {
 } from '../actions/types';
 
 const initialState = {
-    product: "",
+    product: null,
+    loading: true,
+    productCreated: false
+
 }
 
 export default function(state = initialState, action) {
@@ -19,16 +22,28 @@ export default function(state = initialState, action) {
 
     switch(type) { 
         case CREATE_PRODUCT_SUCCESS:
+            return {
+                ...state,
+                productCreated: payload,
+                loading: false
+            }
         case CREATE_PRODUCT_FAIL:
+            return {
+                ...state,
+                productCreated: payload,
+                loading: true
+            }
         case LOAD_PRODUCTS_SUCCESS:
             return {
                 ...state,
                 product: payload,
+                loading: false
             }
         case LOAD_PRODUCTS_FAIL:
             return {
                 ...state,
                 product: "",
+                loading: true
             }
         case UPDATE_PRODUCT_SUCCESS:
         case UPDATE_PRODUCT_FAIL:

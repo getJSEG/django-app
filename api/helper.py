@@ -22,29 +22,60 @@ locationType = {
     'DISTRIBUTION_CENTER': '300'
 }
 
-def generate_store_number(location_type, country):
+def store_number_generator(location_type, country):
     location_number = ''
     length = 6
     # get the location type
     # CHANGE THIS TO LOWER CASE
     for key, value in locationType.items():
-        if location_type == key:
+        if location_type.upper() == key:
             location_number = value
 
     # get country code
     for key, value in countryCode.items():
         # CHANGE THIS TO LOWER CASE
-        if country == key:
+        if country.lower() == key:
             location_number = location_number + value
     # create random number
     code = ''.join(random.choices(string.ascii_lowercase, k=length))
     # join the code and 
     location_number = location_number + str(code)
-
+    
     return str(location_number)
 
-# EMAIL_USE_TLS = True
-# EMAIL_HOST = 'smpt.gmail.com'
-# EMAIL_HOST_USER = '@gmail.com'
-# EMAIL_HOST_PASSWORD = 'password here'
-# EMAIL_PORT = 587
+
+def generate_sku(data,  brand, productId):
+    sku = ''
+    product_id_str = str(productId)
+
+    try: 
+        for info in data:
+            if info == 'name':
+                sku = sku + data[info][:5].strip().title()
+            elif info == 'size':
+                sku = sku + data[info][:3].strip().title()
+            elif info == "description":
+                words = data[info].split()
+                for word in  words:
+                    sku = sku + word[:4].title().strip()
+
+            product_id = product_id_str[:8]
+            
+        sku = sku +  brand[:5] + product_id
+    except: 
+        return ''
+
+    return ''.join(e for e in sku if e.isalnum())
+
+
+
+def  cal_balance(grand_total, amount_paid): 
+    balance = grand_total
+
+    if amount_paid <= 0:
+        return balance
+    
+    if amount_paid > 0:
+        balance = balance - amount_paid
+
+    return balance

@@ -26,21 +26,23 @@ export const checkAuthenticated = () => async dispatch =>  {
     try {
 
         const response = await axios.get("/api/authenticated", requestOptions)
-        // await fetch("/api/authenticated",requestOptions)
+        
         if (response.status >= 200 && response.status <= 299) { dispatch({ type: AUTHENTICATED_SUCCESS, payload: true }); }
         else if (!response.status >= 200 && !response.status <= 299) { dispatch({ type: AUTHENTICATED_FAIL, payload: false }); }
         else{ dispatch({ type: AUTHENTICATED_FAIL, payload: false }); }
-        // .then( data => {
-        //     if (!data.status >= 200 && !data.status <= 299) {
-        //         dispatch({ type: AUTHENTICATED_FAIL, payload: false });
-        //     }
-        //     else if (data.status >= 200 && data.status <= 299) {
-        //         dispatch({ type: AUTHENTICATED_SUCCESS, payload: true });
-        //     }
-        //     else {
-        //         dispatch({ type: AUTHENTICATED_FAIL, payload: false });
-        //     }
-        // })
+
+        // // await fetch("/api/authenticated",requestOptions)
+        // // .then( data => {
+        // //     if (!data.status >= 200 && !data.status <= 299) {
+        // //         dispatch({ type: AUTHENTICATED_FAIL, payload: false });
+        // //     }
+        // //     else if (data.status >= 200 && data.status <= 299) {
+        // //         dispatch({ type: AUTHENTICATED_SUCCESS, payload: true });
+        // //     }
+        // //     else {
+        // //         dispatch({ type: AUTHENTICATED_FAIL, payload: false });
+        // //     }
+        // // })
 
     }catch(err) {
         dispatch({ type: AUTHENTICATED_FAIL, payload: false });
