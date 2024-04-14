@@ -25,8 +25,6 @@ mimetypes.add_type("text/css", ".css", True)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
-
 # EMAIL_USE_TLS = EMAIL_USE_TLS
 # EMAIL_HOST = EMAIL_HOST
 # EMAIL_HOST_USER = EMAIL_HOST_USER
@@ -38,15 +36,16 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 #This will be UNCOMENTED for Production
-# SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
+SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-o5cp0zfxp%ke0u0bwjg=y99xng$)!#qqtlo00l*s4!ee4fu@0g'
+# SECRET_KEY = 'django-insecure-o5cp0zfxp%ke0u0bwjg=y99xng$)!#qqtlo00l*s4!ee4fu@0g'
 
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
+# DEVELOPMENT_MODE = True
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
-# DEBUG = True
+# DEBUG = False
 
 
 #This will be UNCOMENTED for Production
@@ -98,8 +97,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-
 ROOT_URLCONF = 'fourever.urls'
 
 TEMPLATES = [
@@ -132,6 +129,7 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 #     }
 # }
 
+
 if DEVELOPMENT_MODE is True:
     DATABASES = {
         "default": {
@@ -144,7 +142,8 @@ elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
         raise Exception("DATABASE_URL environment variable not defined")
     DATABASES = {
         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
-    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -205,7 +204,7 @@ DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
 DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
 #################### django resize ###############################
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -219,7 +218,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
 CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
-# SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True
 
 # PROD ONLY
 CSRF_COOKIE_SECURE = True
