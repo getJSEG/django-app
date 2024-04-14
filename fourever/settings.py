@@ -96,6 +96,28 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co'
+)
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:3000',
+#     'https://4-ever.co',
+#     'https://4-ever.co'
+# ]
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+
 
 ROOT_URLCONF = 'fourever.urls'
 
@@ -211,9 +233,6 @@ DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-CORS_ORIGIN_ALLOW_ALL = True
 
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
