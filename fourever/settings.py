@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 from rest_framework.settings import api_settings
 from django.core.management.utils import get_random_secret_key
+from corsheaders.defaults import default_headers
 import dj_database_url ##INSTALL THIS Library
 import mimetypes
 import sys #INSTALL THIS Library
@@ -50,7 +51,6 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 #This will be UNCOMENTED for Production
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
-# ALLOWED_HOSTS = ['127.0.0.1', 'localhost', os.getenv("DJANGO_ALLOWED_HOST"), 'api.4-ever.co', '4-ever.co', '4everbyjenn.com']
 
 
 # Application definition
@@ -69,9 +69,7 @@ REST_FRAMEWORK = {
 }
 
 INSTALLED_APPS = [
-    'api.apps.ApiConfig',
     'rest_framework',
-    'IMS',
     'sorl.thumbnail',
     'corsheaders',
     'django.contrib.staticfiles',
@@ -81,6 +79,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'rest_framework.authtoken',
+    'api.apps.ApiConfig',
+    'IMS'
 ]
 
 AUTH_USER_MODEL = 'api.CustomUser'
@@ -214,9 +214,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ##CORS
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_ALL_ORIGINS = False
 
 # CORS_ORIGIN_WHITELIST = (
 #     'http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co'
@@ -224,34 +221,21 @@ CORS_ALLOW_ALL_ORIGINS = False
 
 
 CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co' ]
-
-CORS_ALLOW_METHODS = (
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
-)
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co' ]
 
 #CSRF
-
-CSRF_TRUSTED_ORIGINS = [ 'http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co' ]
+# X_FRAME_OPTIONS = 'ALLOWALL'
+CORS_ALLOW_ALL_ORIGINS = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
 CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
-SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_NAME = "csrftoken"
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'X-CSRFTOKEN',
+]
+CORS_ALLOW_CREDENTIALS = True 
 
 # PROD ONLY
 #if website if not HTTPS this wont work

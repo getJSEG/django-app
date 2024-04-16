@@ -16,10 +16,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
 
 #SETS CSRF TOKEN TO USER WHEN FIRST CALLED
-@method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCSRFToken(APIView):
     permission_classes = (permissions.AllowAny, )
-
+    @method_decorator(ensure_csrf_cookie)
     def get(self, request, format=None):
         print("this is called")
         return Response({ 'isAutheticated': 'CSRF cookie set' })
@@ -28,7 +27,7 @@ class GetCSRFToken(APIView):
 class CheckAuthenticatedView(APIView):
     def get(self, request, format=None):
         user = self.request.user
-
+        print("Authenticated is called")
         try:
             isAuthenticated = user.is_authenticated
             if isAuthenticated:
