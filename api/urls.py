@@ -1,4 +1,6 @@
 from django.urls import path, re_path
+# from knox.views import LogoutView, LogoutAllView
+
 
 from .views import product, varients, location, user, session_auth, point_of_purchase, discount
 
@@ -6,7 +8,10 @@ urlpatterns = [
     #Auth
     path('session', session_auth.GetCSRFToken.as_view()),
     path('authenticated', session_auth.CheckAuthenticatedView.as_view()),
-    #user 
+    #knox
+    # path('logout/', LogoutView.as_view()),
+    # path('logout-all/', LogoutAllView.as_view()),
+    #user
     path('signup', user.CreateUserView.as_view()),
     path('employee/create', user.CreateEmployeeView.as_view()),
     path('login', user.UserLoginView.as_view()),

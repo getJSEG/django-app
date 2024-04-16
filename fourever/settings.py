@@ -51,7 +51,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 #This will be UNCOMENTED for Production
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
-
+# ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'rest_framework.authtoken',
     'api.apps.ApiConfig',
+    'knox',
     'IMS'
 ]
 
@@ -182,10 +183,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, "static"),
-#     os.path.join(BASE_DIR, "media/static"),
-# ]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "media/static"),
+]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -215,32 +216,58 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ##CORS
 
-# CORS_ORIGIN_WHITELIST = (
-#     'http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co'
-# )
 
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co' ]
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://4-ever.co', 'https://4-ever.co' ]
+CORS_ALLOW_ALL_ORIGINS=False
 
-#CSRF
-# X_FRAME_OPTIONS = 'ALLOWALL'
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000','http://127.0.0.1:3000', 'https://4-ever.co']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://4-ever.co' ]
+
+
+# #CSRF
+CORS_ALLOW_CREDENTIALS = True
+CSRF_USE_SESSIONS = False
+
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
+
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
+
 CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
 SESSION_COOKIE_HTTPONLY = True
+
 CSRF_COOKIE_NAME = "csrftoken"
 CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+
+CORS_ALLOW_METHODS = [
+'DELETE',
+'GET',
+'OPTIONS',
+'PATCH',
+'POST',
+'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'X-CSRFTOKEN',
+]
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'X-CSRFTOKEN',
 ]
-CORS_ALLOW_CREDENTIALS = True 
 
+# CSRF_COOKIE_DOMAIN = ['http://127.0.0.1:8000']
 # PROD ONLY
 #if website if not HTTPS this wont work
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
 
 
 DISABLE_COLLECTSTATIC = os.getenv("DEVELOPMENT_MODE", 1) == 1
