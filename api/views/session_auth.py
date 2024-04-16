@@ -21,6 +21,7 @@ class GetCSRFToken(APIView):
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, format=None):
+        print("this is called")
         return Response({ 'isAutheticated': 'CSRF cookie set' })
     
 #CHECK AUTHENTICATION
