@@ -45,8 +45,8 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # DEVELOPMENT_MODE = True
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
-# DEBUG = True
+# DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = True
 
 
 #This will be UNCOMENTED for Production
@@ -124,27 +124,27 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
-if DEVELOPMENT_MODE is True:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-    if os.getenv("DATABASE_URL", None) is None:
-        raise Exception("DATABASE_URL environment variable not defined")
-    DATABASES = {
-        "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
 }
+
+
+# if DEVELOPMENT_MODE is True:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.sqlite3",
+#             "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+#         }
+#     }
+# elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
+#     if os.getenv("DATABASE_URL", None) is None:
+#         raise Exception("DATABASE_URL environment variable not defined")
+#     DATABASES = {
+#         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+# }
 
 
 # Password validation
@@ -215,9 +215,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ##CORS
-
-
-
 CORS_ALLOW_ALL_ORIGINS=False
 
 CORS_ALLOWED_ORIGINS = ['http://localhost:3000','http://127.0.0.1:3000', 'https://4-ever.co']
@@ -228,10 +225,10 @@ CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'https
 CORS_ALLOW_CREDENTIALS = True
 CSRF_USE_SESSIONS = False
 
-CSRF_COOKIE_SAMESITE = 'Strict'
-SESSION_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
@@ -270,4 +267,4 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 #if website if not HTTPS this wont work
 
 
-DISABLE_COLLECTSTATIC = os.getenv("DEVELOPMENT_MODE", 1) == 1
+# DISABLE_COLLECTSTATIC = os.getenv("DEVELOPMENT_MODE", 1) == 1
