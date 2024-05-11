@@ -1,21 +1,45 @@
 from django.urls import path, re_path
+from django.urls import path, include
+from django.conf import settings
+import oauth2_provider.views as oauth2_views 
 # from knox.views import LogoutView, LogoutAllView
-
 
 from .views import product, varients, location, user, session_auth, point_of_purchase, discount
 
+
+oauth2_endpoint_views = [
+    path('authorize/', oauth2_views.AuthorizationView.as_view(), name="authorize"),
+    path('token/', oauth2_views.TokenView.as_view(), name="token"),
+    path('revoke-token/', oauth2_views.RevokeTokenView.as_view(), name="revoke-token"),
+
+]
+
+
+if settings.DEBUG:
+    # OAuth2 Application Management endpoints
+    oauth2_endpoint_views += [
+        path('applications/', oauth2_views.ApplicationList.as_view(), name="list"),
+        path('applications/register/', oauth2_views.ApplicationRegistration.as_view(), name="register"),
+        path('applications/<pk>/', oauth2_views.ApplicationDetail.as_view(), name="detail"),
+        path('applications/<pk>/delete/', oauth2_views.ApplicationDelete.as_view(), name="delete"),
+        path('applications/<pk>/update/', oauth2_views.ApplicationUpdate.as_view(), name="update"),
+    ]
+
+    # OAuth2 Token Management endpoints
+    oauth2_endpoint_views += [
+        path('authorized-tokens/', oauth2_views.AuthorizedTokensListView.as_view(), name="authorized-token-list"),
+        path('authorized-tokens/<pk>/delete/', oauth2_views.AuthorizedTokenDeleteView.as_view(),
+            name="authorized-token-delete"),
+]
+
 urlpatterns = [
     #Auth
-    path('session', session_auth.GetCSRFToken.as_view()),
-    path('authenticated', session_auth.CheckAuthenticatedView.as_view()),
-    #knox
-    # path('logout/', LogoutView.as_view()),
-    # path('logout-all/', LogoutAllView.as_view()),
+    path('o/', include((oauth2_endpoint_views, 'fourever'), namespace="oauth2_provider")),
     #user
     path('signup', user.CreateUserView.as_view()),
     path('employee/create', user.CreateEmployeeView.as_view()),
     path('login', user.UserLoginView.as_view()),
-    path('logout', user.LocationserLogoutView.as_view()),
+    path('logout', user.userLogoutView.as_view()),
     path('profile', user.GetUserProfileView.as_view()),
     path('user/update', user.UpdateUserinformationView.as_view()),
     #locations

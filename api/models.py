@@ -73,10 +73,10 @@ class CustomAccountManager(BaseUserManager):
 #USERS FOR LOCATIONS
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = models.EmailField(max_length=254, null=False, blank=False, unique=True)
+    username = models.EmailField(max_length=255, null=False, blank=False, unique=True)
     first_name = models.CharField(max_length=150, blank=False)
     last_name = models.CharField(max_length=150,  null=True, blank=True)
-    password = models.CharField(max_length=50, null=False, blank=False)
+    password = models.CharField(max_length=255, null=False, blank=False)
     
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -168,10 +168,11 @@ class PurchaseOrder(models.Model):
     status_date = models.DateTimeField(auto_now_add=True)
 
 # PRODUCTS
+# RENAME PRODICT TO CATEGORIES
 class Products(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    name = models.CharField(max_length=60)
+    categorie = models.CharField(max_length=60)
     brand = models.CharField(max_length=60)
     create_on = models.DateTimeField(auto_now_add=True)
     product_acronym = models.CharField(max_length=10, null=True, blank=True) 
@@ -218,6 +219,18 @@ class Varients(models.Model):
     def cal_purchase_price(self):
         price = self.units * self.listed_price
         return '${}'.format(price)
+
+class TopSellingItems(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
+    varient_Id = models.ForeignKey(Varients, on_delete=models.CASCADE, null=True, blank=True )
+    quatitySold =  models.IntegerField()
+
+class Tags(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
+    tag = models.CharField(max_length=100, unique=True) 
+
 
 class Discount(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

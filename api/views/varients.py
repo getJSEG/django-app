@@ -1,14 +1,14 @@
-from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import  status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import UpdateAPIView, RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView
+from oauth2_provider.views.generic import ProtectedResourceView, ReadWriteScopedResourceView
+
 import re
 import os
 
 #this is the new session Authentication
 from rest_framework import permissions
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
 #### MODELS ######
 from ..models import CustomUser                                   #user
@@ -20,7 +20,7 @@ from ..serializers import varients_serializer
 from ..helper import generate_sku
 
 #CREATING VARIENT
-class CreateVarientView(APIView):
+class CreateVarientView(ReadWriteScopedResourceView, APIView):
     queryset = Varients.objects.all()
     serializer_class = varients_serializer.CreateVarientSerializer
 
@@ -31,7 +31,7 @@ class CreateVarientView(APIView):
 
             try:
                 product = Products.objects.get(id=pk)  #getting the product by id
-            except product.DoesNotExist:
+            except :
                 return Response({"error": 'Product not found' }, status=status.HTTP_400_BAD_REQUEST)
         
             album = ImageAlbum.objects.create()    
@@ -102,7 +102,7 @@ class CreateVarientView(APIView):
 #TODO: SEARCH ITEM
 #TODO: CHECK IF ITEM HAS SOLD OUT
 #TODO: CREATE AND REMINDER TO IF ITEMS ARE RUNNING LOW
-class GetVarientView(APIView):
+class GetVarientView(ReadWriteScopedResourceView, APIView):
 
     def get(self, request, product_id, *args, **kwargs):
         user = request.user
@@ -122,7 +122,7 @@ class GetVarientView(APIView):
 
 
 #updating view
-class UpdateVarientView(APIView):
+class UpdateVarientView(ReadWriteScopedResourceView, APIView):
 
     def patch(self, request, pk, *args, **kwargs):
         # Checking permissions
@@ -138,6 +138,9 @@ class UpdateVarientView(APIView):
         if "brand" in data: brand = data["brand"]
         else: brand = varient_instance[0].brand
 
+        if not varient_instance.exists():
+            return Response({'message': 'No Varient Found'}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Updating SKU
         try: sku = generate_sku(request.data, brand, varient_instance[0].product_id.id )
         except: return Response({'message': 'Something went wrong creating SKU'}, status=status.HTTP_400_BAD_REQUEST)
@@ -215,7 +218,7 @@ class UpdateVarientView(APIView):
         return Response({'message': 'success' }, status=status.HTTP_200_OK)
 
 
-class DeleteMultipleVarientView(RetrieveAPIView):
+class DeleteMultipleVarientView(ReadWriteScopedResourceView, RetrieveAPIView):
 
     def post(self, request, *args, **kwargs):
         try:
@@ -225,10 +228,11 @@ class DeleteMultipleVarientView(RetrieveAPIView):
             delete =  request.data['delete']
             for value in delete:
                 clean_value = re.sub(r'[^a-zA-Z0-9-]',"", value)                       #This does a basic cleaning of the string before searching the DB
-        
-                try: 
+                try:
                     varient_instance = Varients.objects.get(id=clean_value, product_id=kwargs['pk'])
-                
+                except:
+                    return Response({"message": 'No Varient Found'}, status=status.HTTP_400_BAD_REQUEST) 
+                try: 
                     if not varient_instance.album == 'None':                            # when the album is None or empty
                         images = varient_instance.album.images.all()                    # Getting all of the Varient Images
                         varient_colors  = varient_instance.album.varient_colors.all()   # Getting all of the Varient Color Images

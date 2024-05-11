@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, DestroyAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from ..helper import store_number_generator
+from oauth2_provider.views.generic import ProtectedResourceView, ReadWriteScopedResourceView
 
 #this is the new session Authentication
 from rest_framework import permissions
@@ -17,20 +18,27 @@ from ..serializers import location_serializer
 
 
 # this returns all of the information from ALLL locations this will not be 
-class LocationView(APIView):
+# this is only for employees No search yet
+class LocationView(ProtectedResourceView, APIView):
 
     def get(self, request, *args, **kwargs):
+
+        if not request.user.has_perm('api.view_locations'):
+            return Response({"message": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN)
+
 
         try:
             user = CustomUser.objects.get(username=request.user)
         except:
             return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # print(user.location.id)
 
         # if(not user.is_superuser or not user.is_staff):
         #     return Response({"message": "You dont have permission"}, status=status.HTTP_403_FORBIDDEN)
 
         # results = Locations.objects.filter(city__icontains=request.GET.get('city'), country__icontains=request.GET.get('country'), store_number__icontains=request.GET.get('store_number') ) 
-        results = Locations.objects.filter(city__icontains=request.GET.get('city'))
+        results = Locations.objects.filter(id__icontains=user.location.id)
         # queryset = Locations.objects.all()
         locations = location_serializer.LocationSerializer(results, many=True)
 
@@ -39,7 +47,7 @@ class LocationView(APIView):
 
 
 # CREATE LOCATION
-class CreateLocationView(CreateAPIView):
+class CreateLocationView(ReadWriteScopedResourceView, CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = location_serializer.CreateLocationSerializer
 
@@ -80,7 +88,7 @@ class CreateLocationView(CreateAPIView):
         
 
 #updated 
-class UpdateLocationView(UpdateAPIView):
+class UpdateLocationView(ProtectedResourceView, UpdateAPIView):
 
     def patch(self, request, format=None):
         try:
@@ -107,7 +115,7 @@ class UpdateLocationView(UpdateAPIView):
                 
                 return Response({'message': 'Success'}, status=status.HTTP_200_OK)
             #If not a super user Update to assigned locations only
-            elif request.user.has_perm('api.change_locations'):                                                                             #check permission for user 
+            elif request.user.has_perm('api.view_locations'):                                                                             #check permission for user 
             
                 user_location = request.user.location                                                                                       #This get the location assign to the manager or owner
 
@@ -124,7 +132,7 @@ class UpdateLocationView(UpdateAPIView):
 
 
 #ONLY ADMIN CAN DELETE ANY LOCATION
-class DeleteLocationView(APIView):
+class DeleteLocationView(ProtectedResourceView, APIView):
     def delete(self, request, pk, form=None):
         try:
             if not request.user.is_superuser:

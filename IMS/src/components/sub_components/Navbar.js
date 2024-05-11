@@ -3,7 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { connect } from "react-redux";
 import { logout } from '../../actions/auth';
 
-const navbar = ({ isAuthenticated,avatar_global,  logout }) => {
+const navbar = ({ isAuthenticated, avatar_global,  logout }) => {
 
 
     const authLinks = (

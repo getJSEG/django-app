@@ -1,8 +1,11 @@
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.response import Response
 from datetime import datetime
 from django.utils import timezone
+# Oauth
+# from oauth2_provider.views.mixins import OAuthLibMixin
+from oauth2_provider.views.generic import ProtectedResourceView, ReadWriteScopedResourceView
 
 #MODELS
 from ..models import Varients, VarientImages, VarientColors, ImageAlbum 
@@ -13,17 +16,23 @@ from ..serializers import point_of_sales_serializer as posSerealizer
 from ..helper import cal_balance
 
 #this will get the item from the DB
-class SKUSearch(APIView):
-    def get(self, request, format=None):
+class SKUSearch(ProtectedResourceView, APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    # add extra protection for this request
+    def post(self, request, format=None):
                 
         user  = request.user
-
-        if not user.has_perm('api.view_varients'):
-            return Response({"message": 'Permission Denied'}, status=status.HTTP_403_FORBIDDEN)   
+        # if not user.has_perm('api.view_varients'):
+        #     return Response({"message": 'Permission Denied'}, status=status.HTTP_403_FORBIDDEN)   
+        try:
+            request.data['sku']
+        except:
+            return Response({'message': 'No SKU was provided'}, status=status.HTTP_400_BAD_REQUEST)
+        # print()
+        print(request.data)
 
         sku = request.data['sku']
 
-        print(sku)
 
         try:
             product = Varients.objects.get(sku=sku)
@@ -85,6 +94,7 @@ class POSTransaction(APIView):
         sales_order = SalesOrder.objects.create(**salesOrder_dict)                                      #creating Sales Order
         
         #this create line item for every product that was scanned
+        #TODO: WHEN A SKU IS NOT FOUND THE PROGRAM STOPS
         for info in data:
             try: 
                varient = Varients.objects.get(sku=data[info]["sku"])                                     #this gets the items from the models by the sku

@@ -3,14 +3,22 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import UpdateAPIView
 from django.contrib.auth.models import Group
-from django.contrib.sessions.models import Session
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import login, logout
-from django.utils.decorators import method_decorator
+from django.db import transaction
+import json
+from rest_framework import status, permissions
+from oauth2_provider.settings import oauth2_settings
+# from braces.views import CsrfExemptMixin
+from oauth2_provider.views.mixins import OAuthLibMixin
+from oauth2_provider.views.generic import ProtectedResourceView, ReadWriteScopedResourceView
+
+
+from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 
 #this is the new session Authentication
-from rest_framework import permissions
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+# from rest_framework import permissions
+
 
 #### MODELS ######
 from ..models import CustomUser
@@ -21,32 +29,53 @@ from ..serializers import user_serializers as user_ser
 ################################ USER ####################################
 ########################################################################## 
 #CREATING A Customer
-@method_decorator(csrf_protect, name='dispatch')
-class CreateUserView(APIView):
+# Send to the user to authenticate the new user
+class CreateUserView(OAuthLibMixin, APIView):
     permission_classes = (permissions.AllowAny, )
-    serializer_class = user_ser.CreateUsersSerializer
+    # serializer_class = user_ser.CreateUsersSerializer
+
+    server_class = oauth2_settings.OAUTH2_SERVER_CLASS
+    validator_class = oauth2_settings.OAUTH2_VALIDATOR_CLASS
+    oauthlib_backend_class = oauth2_settings.OAUTH2_BACKEND_CLASS
 
     def post(self, request, format=None):
-        serializer = self.serializer_class(data=request.data)
+        # serializer = self.serializer_class(data=request.data)
 
-        if serializer.is_valid(raise_exception=True): 
-            serializer.save()
-            user = CustomUser.objects.get(username=request.data['username']) # this catches if theirs a user in DB
-            customer_group = Group.objects.get(name="Customers")
-            user.user_permissions.add(*customer_group.permissions.all())
-            customer_group.user_set.add(user)
-        else:
-            return  Response({"error": serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
-        
-        return  Response({'user': serializer.data }, status=status.HTTP_201_CREATED) # return response with stating user created
+        if request.auth is None:
+            data = request.data
+            data = data.dict()
+
+            serializer = user_ser.CreateUsersSerializer(data=data)
+            if serializer.is_valid(raise_exception=True): 
+                # try: 
+                    with transaction.atomic():
+                        serializer.save()
+                        user = CustomUser.objects.get(username=request.data['username']) # this catches if theirs a user in DB
+                        customer_group = Group.objects.get(name="Customers")
+                        user.user_permissions.add(*customer_group.permissions.all())
+                        customer_group.user_set.add(user)
+
+                        url, headers, body, token_status = self.create_token_response(request)
+                        if token_status != 200:
+                            raise Exception(json.loads(body).get("error_description", ""))
+                        return Response(json.loads(body), status=token_status)
+                # except Exception as e:
+                #         return Response(data={"error": e}, status=status.HTTP_400_BAD_REQUEST)
+                
+            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_403_FORBIDDEN) 
 
 
 #This will will only be accesable if the user is a manager or a admin
-@method_decorator(csrf_protect, name='dispatch')
-class CreateEmployeeView(APIView):
+# @method_decorator(csrf_protect, name='dispatch')
+class CreateEmployeeView(ReadWriteScopedResourceView, APIView):
     serializer_class = user_ser.CreateUsersSerializer
 
     def post(self, request, format=None):
+
+        # if not request.auth is None:
+        # return Response(status=status.HTTP_403_FORBIDDEN) 
+        
 
         if not request.user.has_perm('api.add_customuser'):
             return Response({"error": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN)
@@ -97,10 +126,10 @@ class CreateEmployeeView(APIView):
         
 
 #cCHECKS USER CREDENTIALS
-@method_decorator(csrf_protect, name='dispatch')
+# @method_decorator(csrf_protect, name='dispatch')
 class UserLoginView(APIView):
 
-    permission_classes = (AllowAny,)
+    permission_classes = [AllowAny]
     serializer_class = user_ser.LoginSerializer
     
     def post(self, request, format=None):
@@ -120,37 +149,8 @@ class UserLoginView(APIView):
             
         return  Response({"success": "User authenticated"}, status=status.HTTP_200_OK)
 
-
-#GET USER PROFILE
-class GetUserProfileView(APIView):
-    permission_classes = (AllowAny,)
-    
-    def get (self, request, format=None):
-        try:
-            user = self.request.user
-            #TODO: CHANGE THE RETURN INFORMATION
-            user_profile = user_ser.UserSerializer(user)
-           
-            return Response({ 'profile': user_profile.data, 'username': str(user.username) })
-        except:
-            return Response({ 'error': 'Something went wrong when retrieving profile' })
-
-
-# LOGOUT USER
-class LocationserLogoutView(APIView):
-    def post(self, request, format=None):
-        if not request.user.is_authenticated:
-            return  Response({ "message": "Your are not logged in" }, status=status.HTTP_400_BAD_REQUEST)
-        try: 
-            logout(request)
-            return  Response({ "message": "Succefully Logout" }, status=status.HTTP_200_OK)
-        except:
-            return  Response({ "error": "Something went Wront" }, status=status.HTTP_400_BAD_REQUEST)
-
-
 # UPDATE USER INFORMATION
-#TODO: Send a response if the user tries to update email
-class UpdateUserinformationView(UpdateAPIView):
+class UpdateUserinformationView(ReadWriteScopedResourceView, UpdateAPIView):
 
     def patch(self, request, format=None):
         try:
@@ -169,13 +169,39 @@ class UpdateUserinformationView(UpdateAPIView):
             return Response({'message': 'Something went wrong' }, status=status.HTTP_400_BAD_REQUEST)
 
 
+#GET USER PROFILE
+class GetUserProfileView(ProtectedResourceView, APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    # TokenHasReadWriteScope( for permission)
+    
+    def get (self, request, format=None):
+        try:
+            user = self.request.user
+            #TODO: CHANGE THE RETURN INFORMATION
+            user_profile = user_ser.UserSerializer(user)
+           
+            return Response({ 'profile': user_profile.data, 'username': str(user.username) })
+        except:
+            return Response({ 'error': 'Something went wrong when retrieving profile' })
+
+
+# LOGOUT USER
+class userLogoutView(ReadWriteScopedResourceView, APIView):
+    def post(self, request, format=None):
+        if not request.user.is_authenticated:
+            return  Response({ "message": "Your are not logged in" }, status=status.HTTP_400_BAD_REQUEST)
+        try: 
+            logout(request)
+            return  Response({ "message": "Succefully Logout" }, status=status.HTTP_200_OK)
+        except:
+            return  Response({ "error": "Something went Wront" }, status=status.HTTP_400_BAD_REQUEST)
+
 
 #DELETING USER
-class DeleteUserView(APIView):
+class DeleteUserView(ReadWriteScopedResourceView, APIView):
 
     def delete(self, request, format=None):
         username = request.user
-        
         try:
             user = CustomUser.objects.get(username=request.user)
         except:

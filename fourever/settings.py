@@ -45,8 +45,8 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # DEVELOPMENT_MODE = True
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
-# DEBUG = True
+# DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = True
 
 
 #This will be UNCOMENTED for Production
@@ -54,19 +54,49 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",
 # ALLOWED_HOSTS = ['*']
 
 # Application definition
-
 WHITENOISE_MIMETYPES = {
     '.xsl': 'application/xml'
 }
 
+# if not DEBUG:
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticated',
+#         'rest_framework.permissions.AllowAny',
+#     ],
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+#         # 'knox.auth.TokenAuthentication',
+#         # 'rest_framework.authentication.SessionAuthentication',
+#     ],
+#     'DEFAULT_RENDERER_CLASSES':[
+#         'rest_framework.renderers.JSONRenderer'
+#     ]
+# }
+# else:
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        # 'knox.auth.TokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
     ]
 }
+
+
+# OIDC_KEY =  Path(str(BASE_DIR)+'oidc.key').read_text()
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    # "OIDC_ENABLE":True,
+    # "OIDC_RSA_PRIVATE_KEY": OIDC_KEY,
+    'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+
+}
+
+LOGIN_URL = '/admin/login/'
 
 INSTALLED_APPS = [
     'rest_framework',
@@ -80,12 +110,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'rest_framework.authtoken',
     'api.apps.ApiConfig',
-    'knox',
+    # 'knox',
+    'oauth2_provider',
     'IMS'
 ]
 
 AUTH_USER_MODEL = 'api.CustomUser'
-
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -128,23 +158,37 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
 #         'NAME': BASE_DIR / 'db.sqlite3',
+#         'OPTIONS': {
+#             'timeout': 20,
+#         }
 #     }
 # }
 
-
-if DEVELOPMENT_MODE is True:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
-        }
+DATABASES = {
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'NAME': 'my_db',
+    'USER' : 'elmergonzalez',
+    'PASSWORD' : 'my_db@123',
+    'HOST' : '127.0.0.1',
+    'PORT' : '5432',
     }
-elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-    if os.getenv("DATABASE_URL", None) is None:
-        raise Exception("DATABASE_URL environment variable not defined")
-    DATABASES = {
-        "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
 }
+
+
+# if DEVELOPMENT_MODE is True:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.sqlite3",
+#             "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+#         }
+#     }
+# elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
+#     if os.getenv("DATABASE_URL", None) is None:
+#         raise Exception("DATABASE_URL environment variable not defined")
+#     DATABASES = {
+#         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+# }
 
 
 # Password validation
@@ -206,7 +250,7 @@ DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
 DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
 #################### django resize ###############################
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -215,27 +259,27 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ##CORS
-CORS_ALLOW_ALL_ORIGINS=False
+CORS_ALLOW_ALL_ORIGINS = True
+# CORs_ORIGIN_WHITELIST = ['http://localhost:3000','http://127.0.0.1:3000', 'https://4-ever.co']
+# CORS_ALLOWED_ORIGINS = ['http://localhost:3000','http://127.0.0.1:3000', 'https://4-ever.co']
+# CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://4-ever.co' ]
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000','http://127.0.0.1:3000', 'https://4-ever.co']
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://4-ever.co' ]
-
-
+# SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 # #CSRF
 CORS_ALLOW_CREDENTIALS = True
-CSRF_USE_SESSIONS = False
+# CSRF_USE_SESSIONS = False
 
-CSRF_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_SAMESITE = 'None'
+# CSRF_COOKIE_SAMESITE = 'None'
+# SESSION_COOKIE_SAMESITE = 'None'
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = False
+# SESSION_COOKIE_SECURE = False
 
-CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
-SESSION_COOKIE_HTTPONLY = True
+# CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
+# SESSION_COOKIE_HTTPONLY = False
 
-CSRF_COOKIE_NAME = "csrftoken"
-CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+# CSRF_COOKIE_NAME = "csrftoken"
+# CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 CORS_ALLOW_METHODS = [
 'DELETE',
@@ -258,9 +302,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'X-CSRFTOKEN',
 ]
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    'X-CSRFTOKEN',
-]
+# CORS_ALLOW_HEADERS = list(default_headers)
 
 # CSRF_COOKIE_DOMAIN = ['http://127.0.0.1:8000']
 # PROD ONLY

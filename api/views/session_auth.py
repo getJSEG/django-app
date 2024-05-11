@@ -21,6 +21,7 @@ class GetCSRFToken(APIView):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, format=None):
         print("this is called")
+    
         return Response({ 'isAutheticated': 'CSRF cookie set' })
     
 #CHECK AUTHENTICATION
