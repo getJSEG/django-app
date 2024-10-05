@@ -44,22 +44,18 @@ def store_number_generator(location_type, country):
     return str(location_number)
 
 
-def generate_sku(data,  brand, productId):
+def generate_sku(name,brand, size, description, productId):
     sku = ''
     product_id_str = str(productId)
 
     try: 
-        for info in data:
-            if info == 'name':
-                sku = sku + data[info][:5].strip().title()
-            elif info == 'size':
-                sku = sku + data[info][:3].strip().title()
-            elif info == "description":
-                words = data[info].split()
-                for word in  words:
-                    sku = sku + word[:4].title().strip()
+        sku = sku + name[:5].strip().title()
+        sku = sku + size[:3].strip().title()
+        words = description.split()
+        for word in  words:
+            sku = sku + word[:4].title().strip()
 
-            product_id = product_id_str[:8]
+        product_id = product_id_str[:8]
             
         sku = sku +  brand[:5] + product_id
     except: 

@@ -1,14 +1,18 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractUser, PermissionsMixin, AbstractBaseUser, BaseUserManager
-from django import forms 
+from django.db.models import Sum
 from django.core.validators import MaxValueValidator, MinValueValidator
-from .helper import store_number_generator
+from django import forms 
 from django_resized import ResizedImageField
+
 from sorl.thumbnail import ImageField, get_thumbnail
+
+
 import os
 import uuid
 import datetime
+from decimal import Decimal
 import calendar
 
 def get_upload_path(instance, filename):
@@ -17,7 +21,9 @@ def get_upload_path(instance, filename):
     return os.path.join('varients/', filename)
 
 #FAT MODELS THIN VIEWS
-class Locations(models.Model):
+#TODO: Add country code
+#TODO: Add Currency type
+class Location(models.Model):
     WAREHOUSE = "Warehouse"
     RETAIL = "Retail"
     DISTRIBUTION_CENTER = "Distribution Center"
@@ -34,6 +40,8 @@ class Locations(models.Model):
     email = models.CharField(max_length=100, null=True, blank=True)
     phone = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=255)
+    country_code = models.CharField(max_length=255, null=True, blank=True)
+    currency = models.CharField(max_length=255)
     department = models.CharField(max_length=60, null=True, blank=True)
     city = models.CharField(max_length=255)
     country = models.CharField(max_length=60)
@@ -44,7 +52,6 @@ class Locations(models.Model):
     pre_tax_items = models.BooleanField(default=False)                                  #This make it that the items already have a tax added to them
     status_date = models.DateTimeField(auto_now_add=True)
     
-
 class CustomAccountManager(BaseUserManager):
 
     def create_user(self, username, first_name, password, **other_fields):
@@ -74,6 +81,7 @@ class CustomAccountManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.EmailField(max_length=255, null=False, blank=False, unique=True)
+    # email = None
     first_name = models.CharField(max_length=150, blank=False)
     last_name = models.CharField(max_length=150,  null=True, blank=True)
     password = models.CharField(max_length=255, null=False, blank=False)
@@ -83,20 +91,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     create_on = models.DateTimeField(auto_now_add=True)
     date_joined  = models.DateTimeField(auto_now_add=True)
     status_date = models.DateTimeField(auto_now_add=True)
-    location = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True)
     avatar = ResizedImageField(size=[350, 350], upload_to='user', blank=True, null=True)
-
-    objects = CustomAccountManager()
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['first_name']
+
+    objects = CustomAccountManager()
 
     def __str__(self):
         return self.username
 
 # user activity Here
 class UserActivity(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     transaction_type = models.CharField(max_length=60)
     ref_doc_number = models.CharField(max_length=12)
     description = models.CharField(max_length=255)
@@ -105,7 +113,7 @@ class UserActivity(models.Model):
     actioned_by = models.CharField(max_length=60)
 
 class Customer(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     create_on = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
@@ -141,7 +149,7 @@ class Supplier(models.Model):
         ("CHECK", "cheque"),
         ("PAYPAL", "Paypal")
     ]
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     create_on = models.DateTimeField(auto_now_add=True)
     supplier_name = models.CharField(max_length=100)
     contact_person = models.CharField(max_length=100)
@@ -159,7 +167,7 @@ class Supplier(models.Model):
     status_date = models.DateTimeField(auto_now_add=True)
 
 class PurchaseOrder(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     cost_center = models.CharField(max_length=25, blank=True)
     created_by = models.CharField(max_length=100)
@@ -167,109 +175,110 @@ class PurchaseOrder(models.Model):
     status = models.CharField(max_length=25)
     status_date = models.DateTimeField(auto_now_add=True)
 
-# PRODUCTS
-# RENAME PRODICT TO CATEGORIES
-class Products(models.Model):
+####################################################PRODUCT####################################################
+###############################################################################################################
+###############################################################################################################
+ 
+class productCommoInfo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    categorie = models.CharField(max_length=60)
-    brand = models.CharField(max_length=60)
-    create_on = models.DateTimeField(auto_now_add=True)
-    product_acronym = models.CharField(max_length=10, null=True, blank=True) 
+    price = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    created_on = models.DateTimeField(auto_now_add=True)
     status = models.ImageField(max_length=25, null=True, blank=True)
     status_date = models.DateTimeField(auto_now_add=True)
- 
+
+    class Meta:
+        abstract = True
+
+class Tags(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tag = models.CharField(max_length=100, unique=True, null=True, blank=True) 
+
+
 class ImageAlbum(models.Model):
     def default(self):
         return self.images.filter(default=True).first()
     def thumnail(self):
         return self.images.filter(width__lt=100, length_lt=100)
 
-# Product varient colors
-class VarientColors(models.Model):
-    color = ResizedImageField(size=[100, 100], upload_to="colors", blank=True, null=True)
-    description = models.CharField(max_length=100)
-    album = models.ForeignKey(ImageAlbum, related_name='varient_colors', on_delete=models.CASCADE)
-
 # Product varient images for males and female models
-class VarientImages(models.Model):
-    image = ResizedImageField(size=[1000, 1500], upload_to=get_upload_path, blank=True, null=True)
+class ProductImages(models.Model):
+    images = ResizedImageField(size=[1000, 1500], upload_to="products/", blank=True, null=True)
     album = models.ForeignKey(ImageAlbum, related_name='images', on_delete=models.CASCADE)
 
-# product Varients
-class Varients(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
-    product_id = models.ForeignKey(Products, on_delete=models.CASCADE, null=True, blank=True)
+class Product(productCommoInfo):
     name = models.CharField(max_length=100)
-    brand = models.CharField(max_length=60, null=True, blank=True)
-    vendor_sku = models.CharField(max_length=100)
+    brand = models.CharField(max_length=60)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
+    vendor_sku = models.CharField(max_length=100, null=True, blank=True)
+    item_cost = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    product_acronym = models.CharField(max_length=10, null=True, blank=True)
+    album = models.OneToOneField(ImageAlbum, related_name='product_album', on_delete=models.CASCADE, null=True)
+    created_by = models.CharField(max_length=250, null=True, blank=True)
+ 
+# Product varient colors
+class VarientColor(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    image = ResizedImageField(size=[100, 100], upload_to="color/", blank=True, null=True)
+    color = models.CharField(max_length=100)
+
+# product Varient
+# iNSTAED OF HAVING A MANY 2 MANY RELATION SHIP  it could one a product ID
+class Varient(productCommoInfo):
     size = models.CharField(max_length=10)
+    units = models.PositiveIntegerField()
     sku = models.CharField(max_length=100, unique=True)
-    album = models.OneToOneField(ImageAlbum, related_name='model', on_delete=models.CASCADE, null=True)
-    units = models.IntegerField()
-    purchase_price = models.DecimalField(max_digits=8, decimal_places=2)
-    listed_price = models.DecimalField(max_digits=8, decimal_places=2)
+    varient_color = models.ForeignKey(VarientColor, related_name="product", on_delete=models.CASCADE)
     storage_location = models.CharField(max_length=100, null=True, blank=True)
-    create_on = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=25)
-    status_date = models.DateTimeField(auto_now_add=True)
+    min_units = models.PositiveIntegerField(default=1)
 
     @property
     def cal_purchase_price(self):
         price = self.units * self.listed_price
         return '${}'.format(price)
+    
+# Product Attribute
+class ProductAttribute(models.Model):
+    product = models.ForeignKey(Product, related_name="product", on_delete=models.CASCADE)
+    varients = models.ManyToManyField(Varient, related_name="varients")
+    tags = models.ManyToManyField(Tags, related_name="varients", blank=True)
+    
+    def totalVarientValue(self):
+        totalPrice = self.varients.all().aggregate(total_value=Sum('price'))
+        return totalPrice
+    
+    def varient_count(self):
+        count = self.varients.all().count()
+        return count
 
-class TopSellingItems(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
-    varient_Id = models.ForeignKey(Varients, on_delete=models.CASCADE, null=True, blank=True )
-    quatitySold =  models.IntegerField()
 
-class Tags(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
-    tag = models.CharField(max_length=100, unique=True) 
-
+# class ProductManager(models.Manager):
+#     def create (self, name, brand,location_id, vendor_sku, item_cost, product_acronym, album, created_by):
+#         # attr
+#         # Product
+#         product = Product(name=name, brand=brand,location_id=location_id, vendor_sku=vendor_sku, item_cost=item_cost, product_acronym=product_acronym, album, created_by)
+        # Tags
 
 class Discount(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    location = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True)
     discount_code = models.CharField(max_length=56, unique=True)
     discount = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, null=True, blank=True)
     expiration = models.DateTimeField()
     description = models.CharField(max_length=100)
     status_date = models.DateTimeField(auto_now_add=True)
 
-class Catalogs(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+class Catalog(models.Model):
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     catalog_name = models.CharField(max_length=100)
-    varient_id = models.ForeignKey(Varients, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
+    varient_id = models.ForeignKey(Varient, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
 
-class PurchaseOrderLines(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    created_on = models.DateTimeField(auto_now_add=True)
-    purchase_order_id = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
-    catalog_id = models.ForeignKey(Catalogs, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Products, on_delete=models.CASCADE)
-    varient_id = models.ForeignKey(Varients, on_delete=models.CASCADE)
-    supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    item_name = models.CharField(max_length=150)
-    sku = models.CharField(max_length=20)
-    uom = models.CharField(max_length=15)
-    unit_price = models.DecimalField(max_digits=8, decimal_places=2)
-    order_quantity = models.IntegerField()
-    total_price = models.DecimalField(max_digits=8, decimal_places=2)
-    rec_quanity = models.IntegerField()
-    status = models.CharField(max_length=25)
-    status_date = models.DateTimeField(auto_now_add=True)
-
+# TODO: Change Spelling from __ to StockTransfer
 class StockTranfer(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
-    varient_id = models.ForeignKey(Varients, on_delete=models.CASCADE)
+    varient_id = models.ForeignKey(Varient, on_delete=models.CASCADE)
     unit_purchase_price = models.DecimalField(max_digits=9, decimal_places=2)
     tranfer_by_location = models.IntegerField()
     tranfer_by_costcenter = models.CharField(max_length=25)
@@ -292,40 +301,110 @@ class StockTranfer(models.Model):
     def Total_receive_value(self):
         return self.unit_purchase_price * self.rec_quanity
 
-#############
-#############
-# SALES MANAGEMENT ######
-#######
-##########
- 
-class SalesOrder(models.Model):
-    PHYSICAL = "physical_retail"
-    ONLINE = "Online"
-    ORDER_TYPES_CHOICES = [
-        ("PHYSICAL_STORE", "physical_retail"),
-        ("ONLINE", "Online"),
-    ]
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    created_on = models.DateTimeField(auto_now_add=True)
-    profit_center = models.CharField(max_length=25)
-    order_type = models.CharField(max_length=15, choices=ORDER_TYPES_CHOICES, default=PHYSICAL)
-    customer_id = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-    invoice_status = models.CharField(max_length=30)
-    created_by = models.CharField(max_length=100)
-    status = models.CharField(max_length=25)
-    status_date = models.DateTimeField()
 
-class SalesOrderLines(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+
+#############
+############## SALES MANAGEMENT ######
+#################
+#CORRECT SPELLING Receipted
+# discount -> in dollars
+# TAXES -> IN DOLLARS( Taxes Collected) this may vary country by coutry if taxed are included in the products
+# sub total
+class SalesOrder(models.Model):
+    PROCESSING = "Processing"
+    PAID = "Paid"
+    
+    SALESORDER_TYPE_CHOICES = [
+        ("PROCESSING", "Processing"),
+        ("PAID", "Paid"),
+    ]
+    # user = models.ForeignKey(Locations, on_delete=models.CASCADE, null=True, blank=True)
+    full_name = models.CharField(max_length=250, null=True, blank=True)
+    email = models.EmailField(max_length=250, null=True, blank=True)
+    shipping_address = models.TextField(max_length=15000, null=True, blank=True)
+    shipping_and_handling = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                         
+    taxes = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    discount = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, null=True, blank=True)
+    order_total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    order_total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    date_created = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=25, choices=SALESORDER_TYPE_CHOICES, default=PROCESSING, null=True, blank=True)
+    created_by = models.CharField(max_length=250)
+
+    @property
+    def is_paid(self):
+        if self.order_total_paid < self.order_total_price:
+            return False
+        else:
+            return True
+
+    @property
+    def Gross_total(self):
+        return self.subtotal + self.total_tax
+    @property
+    def Discount(self):
+        return self.gross_total * self.discount_percentage
+    
+    @property
+    def amount_payable(self):
+        return self.gross_total - self.Discount
+    
+    @property
+    def balance(self):
+        return self.amount_payable - self.amount_paid
+    
+    def __str___(self):
+        return f'Order Item - {str(self.id)}'
+
+class SalesOrderLine(models.Model):
+    # In store
+    CLOSED = "Closed"
+    # Online Orderd
+    PROCESSING = "Processing"
+    SHIPPED = "Shipped"
+    DELIVERED = "Delivered"
+    COMPLETED = "Completed"
+    RETURNED = "Returned"
+    # Both online and store
+    REFUNDED = "Refunded"
+    PARTIAL_REFUND = "Partial Refunded"
+    
+    RETURN_TYPE_CHOICES = [
+        ("CLOSED", "Closed"),
+
+        ("PROCESSING", "Processing"),
+        ("SHIPPED", "Shipped"),
+        ("DELIVERED", "Delivered"),
+        ("RETURNED", "Returned"),
+        ("COMPLETED", "Completed"),
+
+        ("REFUNDED", "Refunded"),
+        ("PARTIAL_REFUND", "Partial Refunded"),
+    ]
     order_id = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
-    varient_id = models.ForeignKey(Varients, on_delete=models.CASCADE)
-    sku = models.CharField(max_length=20)
-    item_name = models.CharField(max_length=100)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.IntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    created_on = models.DateTimeField(auto_now_add=True)
-    status_date = models.DateTimeField()
+    varient_id = models.ForeignKey(Varient, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=7, decimal_places=2)
+    status = models.CharField(max_length=25, choices=RETURN_TYPE_CHOICES, default=PROCESSING, null=True, blank=True)
+    status_date = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def cal_purchase_price(self):
+        total_price = self.quantity * self.unit_price
+        return '${}'.format(total_price)
+    
+    def __str___(self):
+        return f'Order Item - {str(self.id)}'
 
 class ReturnOrders(models.Model):
     ONE = "Wrong Size"
@@ -345,7 +424,7 @@ class ReturnOrders(models.Model):
         ("SEVEN", "Arrived Too Late"),
     ]
 
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     order_id = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
     order_date = models.DateTimeField()
@@ -372,10 +451,10 @@ class ReturnLines(models.Model):
         ("OTHER", "Other")
     ]
 
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     return_order_id = models.ForeignKey(ReturnOrders, on_delete=models.CASCADE)
-    varient_id = models.ForeignKey(Varients, on_delete=models.CASCADE)
+    varient_id = models.ForeignKey(Varient, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=30)
     sku = models.CharField(max_length=30)
     unit_price = models.DecimalField(max_digits=9, decimal_places=2)
@@ -390,61 +469,112 @@ class ReturnLines(models.Model):
     def Total_price(self):
         return self.unit_price * self.quantity
 
-class Invoice(models.Model):
+# TODO: Had diferent types 
+# cash debit, credit, bacnk tranfer
+# class paymentType (models.Model):
+#     pass
+
+# Rename this to another thing When Deploying
+# TODO: RENAME TO OrderPayments
+#TODO: ADD TRANSACTION ID OR ORDER ID Auto Generated
+class TransactionReceipt(models.Model):
     CASH = "Cash"
-    CREDIT = "Credit"
-    DEBIT = "Debit"
-    TRANSFER = "Bank Transfer"
-    CHECK = "cheque"
-    PAYPAL = "Paypal"
+    CREDIT = "Credit Card (Offline)"
+    EFT = "Bank Transfer"
 
     PAYMENT_TYPE_CHOICES = [
         ("CASH", "Cash"),
         ("CREDIT", "Credit"),
-        ("DEBIT", "Debit"),
-        ("TRANSFER", "Bank Transfer"),
-        ("CHECK", "cheque"),
-        ("PAYPAL", "Paypal")
+        ("EFT", "Bank Transfer"),
     ]
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    sales_order_id = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                          
-    total_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    discount = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, null=True, blank=True)
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    # balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                          #
-    change = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                           #this is the change that should be give to the customer
-    cc_authcode= models.CharField(max_length=100, null=True, blank=True)                                                  #this is a authorizarion coe for credit card payment
-    payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default=CASH)
-    created_on = models.DateTimeField(auto_now_add=True)
-    created_by = models.CharField(max_length=100)
-    status = models.CharField(max_length=25)
-    status_date = models.DateTimeField()
-
-    @property
-    def Gross_total(self):
-        return self.subtotal + self.total_tax
-    @property
-    def Discount(self):
-        return self.gross_total * self.discount_percentage
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
+    order = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
+    amount_received = models.DecimalField(max_digits=7, decimal_places=2, default=0.00) 
+    amount = models.DecimalField(max_digits=7, decimal_places=2, default=0.00)                          # The amount of the first trasaction
+    order_total = models.DecimalField(max_digits=7, decimal_places=2, default=0.00)                     # this is the amount after the the refund
     
-    @property
-    def amount_payable(self):
-        return self.gross_total - self.Discount
-    
-    @property
-    def balance(self):
-        return self.amount_payable - self.amount_paid
+    transaction_type = models.CharField(max_length=25, choices=PAYMENT_TYPE_CHOICES, default=CASH)
+    refundable_amount = models.DecimalField(max_digits=7, decimal_places=2, default=order_total)           # This the amount of money a user can be refunded /After this hits 0 the order is closed
+    isOnline  = models.BooleanField(default=False)
+      
+    # master_transaction_id = models.IntegerField()
+    # master_transaction_payment_number = models.CharField(max_length=25)
+    order_payment_refund_info = models.ManyToManyField(ReturnOrders, related_name="refund_orders", blank=True)
+    name_on_card = models.CharField(max_length=25, null=True, blank=True)
+    has_refund = models.BooleanField(default=False)
+    CcLast4Digits = models.CharField(max_length=4, null=True, blank=True)
 
-class CreditNote(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    created_on = models.DateTimeField()
-    return_order_id = models.ForeignKey(ReturnOrders, on_delete=models.CASCADE)    
-    profit_center_id = models.CharField(max_length=30)
-    return_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    status = models.CharField(max_length=25)
-    status_date = models.DateTimeField()
+    Auth_code = models.CharField(max_length=255, null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+
+# # functions as a request for payment 
+# class Invoice(models.Model):
+#     CASH = "Cash"
+#     CREDIT = "Credit"
+#     DEBIT = "Debit"
+#     TRANSFER = "Bank Transfer"
+#     CHECK = "cheque"
+#     PAYPAL = "Paypal"
+
+#     PAYMENT_TYPE_CHOICES = [
+#         ("CASH", "Cash"),
+#         ("CREDIT", "Credit"),
+#         ("DEBIT", "Debit"),
+#         ("TRANSFER", "Bank Transfer"),
+#         ("CHECK", "cheque"),
+#         ("PAYPAL", "Paypal")
+#     ]
+#     location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
+#     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                          
+#     total_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+#     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+#     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+#     payment_type = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default=CASH)
+#     sales_order_id = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, null=True, blank=True)
+#     discount = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, null=True, blank=True)
+#     # balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                          #
+#     change = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)                                           #this is the change that should be give to the customer
+#     cc_authcode= models.CharField(max_length=100, null=True, blank=True)                                                  #this is a authorizarion coe for credit card payment
+#     created_on = models.DateTimeField(auto_now_add=True)
+#     created_by = models.CharField(max_length=100)
+#     status = models.CharField(max_length=25)
+#     status_date = models.DateTimeField()
+
+#     @property
+#     def Gross_total(self):
+#         return self.subtotal + self.total_tax
+#     @property
+#     def Discount(self):
+#         return self.gross_total * self.discount_percentage
+    
+#     @property
+#     def amount_payable(self):
+#         return self.gross_total - self.Discount
+    
+#     @property
+#     def balance(self):
+#         return self.amount_payable - self.amount_paid
+
+# class CreditNote(models.Model):
+#     location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
+#     created_on = models.DateTimeField()
+#     return_order_id = models.ForeignKey(ReturnOrders, on_delete=models.CASCADE)    
+#     profit_center_id = models.CharField(max_length=30)
+#     return_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+#     status = models.CharField(max_length=25)
+#     status_date = models.DateTimeField()
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##########################
@@ -453,8 +583,27 @@ class CreditNote(models.Model):
 ########   AND  ########
 #####    FINCACE #######
 #######################
+class PurchaseOrderLines(models.Model):
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
+    created_on = models.DateTimeField(auto_now_add=True)
+    purchase_order_id = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
+    catalog_id = models.ForeignKey(Catalog, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    varient_id = models.ForeignKey(Varient, on_delete=models.CASCADE)
+    supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    item_name = models.CharField(max_length=150)
+    sku = models.CharField(max_length=20)
+    uom = models.CharField(max_length=15)
+    unit_price = models.DecimalField(max_digits=8, decimal_places=2)
+    order_quantity = models.IntegerField()
+    total_price = models.DecimalField(max_digits=8, decimal_places=2)
+    rec_quanity = models.IntegerField()
+    status = models.CharField(max_length=25)
+    status_date = models.DateTimeField(auto_now_add=True)
+
+
 class ExpenseTypes(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     expense_type = models.CharField(max_length=100)
     status = models.CharField(max_length=25)
@@ -474,7 +623,7 @@ class MyForm(forms.ModelForm):
 
 class Expense(models.Model):
     MONTH_CHOICES = [(str(i), calendar.month_name[i]) for i in range(1,13)]
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     expense_type_id = models.ForeignKey(ExpenseTypes, on_delete=models.CASCADE)
     cost_center = models.CharField(max_length=30)
@@ -489,7 +638,7 @@ class Expense(models.Model):
     status_date = models.DateTimeField()
 
 class AccountsPayable(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     cost_center = models.CharField(max_length=30)
     payable_type = models.CharField(max_length=50)
@@ -508,7 +657,7 @@ class AccountsPayable(models.Model):
     @property
     def Balanc(self):
         return self.total_payable - self.paid_amount
-
+# This is payment made for a supplier
 class PaymentVoucher(models.Model):
     CASH = "Cash"
     CREDIT = "Credit"
@@ -526,8 +675,7 @@ class PaymentVoucher(models.Model):
         ("PAYPAL", "Paypal"),
         ("PORTAL", "Online Portal")
     ]
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    created_on = models.DateTimeField(auto_now_add=True)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     account_payable_id =  models.ForeignKey(AccountsPayable, on_delete=models.CASCADE)
     total_due = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
     total_paid = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
@@ -535,11 +683,12 @@ class PaymentVoucher(models.Model):
     payment_channel = models.CharField(max_length=15, choices=PAYMENT_TYPE_CHOICES, default=CASH)
     payment_document = models.CharField(max_length=100, null=True, blank=True)
     payment_doc_validity = models.CharField(max_length=100)
+    created_on = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=25)
     status_date = models.DateTimeField()
 
 class AccountReceivables(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    location_id = models.ForeignKey(Location, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     profit_center = models.CharField(max_length=25)
     revenue_type = models.CharField(max_length=100)
@@ -556,13 +705,3 @@ class AccountReceivables(models.Model):
     @property
     def Balance(self):
         return self.total_receivable_amount - self.received_amount
-
-
-class ReceiteVoucher(models.Model):
-    location_id = models.ForeignKey(Locations, on_delete=models.CASCADE)
-    created_on = models.DateTimeField(auto_now_add=True)
-    account_receivable_id = models.ForeignKey(AccountReceivables, on_delete=models.CASCADE)
-    total_received = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
-    received_on = models.DateTimeField()
-    status = models.CharField(max_length=25)
-    status_date = models.DateTimeField()

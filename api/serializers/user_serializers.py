@@ -3,9 +3,8 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from drf_extra_fields.fields import Base64ImageField
 
-from ..models import Locations
 from ..models import CustomUser
-from ..models import Products, Varients, VarientImages, VarientColors, ImageAlbum
+# from ..models import Product, Varients, VarientImages, VarientColors, ImageAlbum
 
 
 #get the USER information
@@ -13,11 +12,11 @@ from ..models import Products, Varients, VarientImages, VarientColors, ImageAlbu
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = ['id','username','first_name','last_name', 'is_active', 'avatar', 'location', 'create_on', 'groups']
 
 #USER SIGNUP
 class CreateUsersSerializer(serializers.ModelSerializer):
-    avatar = serializers.ImageField()
+    # avatar = serializers.ImageField()
 
     class Meta:
         model = CustomUser
@@ -48,28 +47,28 @@ class CreateUsersSerializer(serializers.ModelSerializer):
 ################################ USER ####################################
 ##########################################################################     
 #USER LOGIN
-class LoginSerializer(serializers.Serializer):
+# class LoginSerializer(serializers.Serializer):
 
-    username = serializers.EmailField() 
-    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
+#     username = serializers.EmailField() 
+#     password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
 
-    def validate(self, attrs):
-        username = attrs.get('username').strip().lower()
-        password = attrs.get('password')
+#     def validate(self, attrs):
+#         username = attrs.get('username').strip().lower()
+#         password = attrs.get('password')
 
-        if not username or not password: # check is password and username are not empty
-            raise serializers.ValidationError('please provide email and password')
+#         if not username or not password: # check is password and username are not empty
+#             raise serializers.ValidationError('please provide email and password')
            
-        if not CustomUser.objects.filter(username=username).exists(): # check if the user exist
-            raise serializers.ValidationError('wrong Email or Password')
+#         if not CustomUser.objects.filter(username=username).exists(): # check if the user exist
+#             raise serializers.ValidationError('wrong Email or Password')
  
-        user = authenticate(request=self.context.get('request'), username=username, password=password)
+#         user = authenticate(request=self.context.get('request'), username=username, password=password)
         
-        if not user: # throw error if information does not match
-            raise serializers.ValidationError('wrong Email or Password')
+#         if not user: # throw error if information does not match
+#             raise serializers.ValidationError('wrong Email or Password')
 
-        attrs['user'] = user
-        return attrs
+#         attrs['user'] = user
+#         return attrs
 
 # update user information
 class UpdateUsersSerializer(serializers.ModelSerializer):

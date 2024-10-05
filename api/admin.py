@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, SalesOrder, SalesOrderLine, TransactionReceipt
 from django.forms import Textarea, TextInput
 
 # Register your models here.
@@ -16,3 +16,6 @@ from django.forms import Textarea, TextInput
 #     # )
 
 admin.site.register(CustomUser)
+admin.site.register(SalesOrder)
+admin.site.register(SalesOrderLine)
+admin.site.register(TransactionReceipt)

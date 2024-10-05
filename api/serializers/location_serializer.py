@@ -3,25 +3,20 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from drf_extra_fields.fields import Base64ImageField
 
-from ..models import Locations
+from ..models import Location
 from ..models import CustomUser
-from ..models import Products, Varients, VarientImages, VarientColors, ImageAlbum
 
-
-
-################################ LOCATION ################################
-##########################################################################
 # TESTING ONLY
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Locations
+        model = Location
         fields = '__all__'
 
 #Creating LOCATION
 #MODIFI 
 class CreateLocationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Locations
+        model = Location
         fields = ('location_type', 'incharge', 'email', 'address', 'city', 'department', 'store_number',
                   'country','status','profit_center', 'cost_center', 'status_date', 'local_tax', 'pre_tax_items')
         extra_kwargs = {
@@ -61,12 +56,11 @@ class CreateLocationSerializer(serializers.ModelSerializer):
 class UpdateLocationSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Locations
+        model = Location
         fields = ('incharge', 'email', 'phone', 'status','profit_center', 'address', 'city', 'department',
                   'cost_center', 'status_date', 'local_tax', 'pre_tax_items')
     
     def validate(self, attrs):
-
 
         for key in attrs:
             if key == 'email':

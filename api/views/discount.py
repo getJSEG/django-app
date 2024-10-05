@@ -1,21 +1,22 @@
-from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from datetime import datetime
 from django.utils import timezone
 import pytz
 
-#this is the new session Authentication
-from rest_framework import permissions
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+# Permission and Authetication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from ..serializers import discount_serializer
 
 from ..models import Discount
 
-
 class GetDiscountView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         if not request.user.has_perm('api.view_discount'):
@@ -28,20 +29,20 @@ class GetDiscountView(APIView):
 
         if not queryset.exists():
            return Response({'message': "Does not Exist"}, status=status.HTTP_400_BAD_REQUEST)
-
-        #check date
-        print(queryset[0].expiration > datetime.now(tz=timezone.utc))
         
         if queryset[0].expiration < datetime.now(tz=timezone.utc):
            return Response({'message': "Discount Expired"}, status=status.HTTP_400_BAD_REQUEST)
            
-        # print(discount_instance)
-        
         serializer = discount_serializer.GetDiscountSerializer(queryset[0])
         
         return Response({'message': serializer.data}, status=status.HTTP_200_OK)
 
+
+#TODO: Use Atomic WHE CREATING THIS 
 class CreateDiscountView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
         if not request.user.has_perm('api.add_discount'):
@@ -68,12 +69,16 @@ class CreateDiscountView(APIView):
         
         return Response({'message': "success"}, status=status.HTTP_200_OK)
 
+
 class DeleteDiscount(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk, format=None):
         #permission
-        # if not request.user.has_perm('api.delete_discount'):
-        #   return Response({'message': 'permission Denied'}, status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.has_perm('api.delete_discount'):
+          return Response({'message': 'permission Denied'}, status=status.HTTP_401_UNAUTHORIZED)
 
         # id = request.GET.get('id')
 

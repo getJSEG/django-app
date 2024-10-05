@@ -3,42 +3,44 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, DestroyAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAuthenticated
-from ..helper import store_number_generator
-from oauth2_provider.views.generic import ProtectedResourceView, ReadWriteScopedResourceView
 
-#this is the new session Authentication
-from rest_framework import permissions
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from ..helper import store_number_generator
+
+# Authentication and permissions
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 #### MODELS ######
-from ..models import CustomUser, Locations
+from ..models import CustomUser, Location
 
+# Serializer
 from ..serializers import location_serializer 
 
 
 # this returns all of the information from ALLL locations this will not be 
-# this is only for employees No search yet
-class LocationView(ProtectedResourceView, APIView):
+class LocationView( APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
 
-        if not request.user.has_perm('api.view_locations'):
+        if not request.user.has_perm('api.view_location'):
             return Response({"message": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN)
-
 
         try:
             user = CustomUser.objects.get(username=request.user)
         except:
             return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # print(user.location.id)
 
+        print(user.location)
+        print(user)
         # if(not user.is_superuser or not user.is_staff):
         #     return Response({"message": "You dont have permission"}, status=status.HTTP_403_FORBIDDEN)
 
-        # results = Locations.objects.filter(city__icontains=request.GET.get('city'), country__icontains=request.GET.get('country'), store_number__icontains=request.GET.get('store_number') ) 
-        results = Locations.objects.filter(id__icontains=user.location.id)
+        # results = Location.objects.filter(city__icontains=request.GET.get('city') ) 
+        results = Location.objects.filter(id=user.location.id ) 
+        # results = Locations.objects.filter(city__icontains=user.location.id)
         # queryset = Locations.objects.all()
         locations = location_serializer.LocationSerializer(results, many=True)
 
@@ -47,10 +49,13 @@ class LocationView(ProtectedResourceView, APIView):
 
 
 # CREATE LOCATION
-class CreateLocationView(ReadWriteScopedResourceView, CreateAPIView):
+# TODO: Use atomic with this 
+class CreateLocationView( CreateAPIView):
+    
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = location_serializer.CreateLocationSerializer
 
+    serializer_class = location_serializer.CreateLocationSerializer
 
     def post(self, request, format=None):
         try:
@@ -64,14 +69,14 @@ class CreateLocationView(ReadWriteScopedResourceView, CreateAPIView):
             location_type = str(data["location_type"])
 
             store_number = store_number_generator(location_type, country)
-            location = location = Locations.objects.filter(store_number = store_number)
+            location = location = Location.objects.filter(store_number = store_number)
 
             if not location.exists():                                                       #if the location does not exist on first search same the store_number
                 data["store_number"] = store_number
             else:
                 while location.exists():                                                    #else loop until you get a new store number that does not exist
                     store_number = store_number_generator(location_type, country)
-                    location = Locations.objects.filter(store_number = store_number)
+                    location = Location.objects.filter(store_number = store_number)
                 data["store_number"] = store_number
 
             serializer = self.serializer_class(data=data)   
@@ -88,7 +93,10 @@ class CreateLocationView(ReadWriteScopedResourceView, CreateAPIView):
         
 
 #updated 
-class UpdateLocationView(ProtectedResourceView, UpdateAPIView):
+class UpdateLocationView( UpdateAPIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, format=None):
         try:
@@ -102,7 +110,7 @@ class UpdateLocationView(ProtectedResourceView, UpdateAPIView):
                 location = data.pop('location')
 
                 try:
-                    location_instance = Locations.objects.get(id=location[0])
+                    location_instance = Location.objects.get(id=location[0])
                 except:
                     return Response({'message': 'Location does not exist'}, status=status.HTTP_400_BAD_REQUEST) 
 
@@ -132,14 +140,18 @@ class UpdateLocationView(ProtectedResourceView, UpdateAPIView):
 
 
 #ONLY ADMIN CAN DELETE ANY LOCATION
-class DeleteLocationView(ProtectedResourceView, APIView):
+class DeleteLocationView( APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, pk, form=None):
         try:
             if not request.user.is_superuser:
                 return Response({'message': 'Permission Denied'}, status=status.HTTP_403_FORBIDDEN)
             
             try:
-                location = Locations.objects.get(id=pk)
+                location = Location.objects.get(id=pk)
             except:
                 return Response({'message': 'This Location Does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 

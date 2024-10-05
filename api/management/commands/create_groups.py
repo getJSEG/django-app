@@ -6,53 +6,49 @@ from django.contrib.auth.models import Permission
 # from application.api.models. import CusomUserField
 from ...models import CustomUser
 
-#TODO: CREATE  GROUPD WITH PERMISSIONS
-#TODO: CONNECT A NEW DATA BASE
-# TODO: FIX THE MODEL NAMING
+# all name have to be lowercase
+# permission need to be lowercase
 GROUPS = {
     "Regional Manager": {
         #general permissions
-        "locations" : ["add","change","view"],
+        "location" : ["add","change","view"],
         "expense" : ["add","delete","change","view"],
         "expense types" : ["add","delete","change","view"],
         "supplier" : ["add","delete","change","view"],
         "stock tranfer" : ["add","delete","change","view"], #TODO: FIX THE MISSSPELLING (tranfer to Transfer)
         "purchase order" : ["add","delete","change","view"],
         "purchase order lines" : ["add","delete","change","view"],
-        "receite voucher" : ["add","delete","change","view"],
         "sales order" : ["add","delete","change","view"],
-        "sales order lines" : ["add","delete","change","view"],
+        "sales order line" : ["add","delete","change","view"],
         "custom user" : ["add","delete","change","view"],
         "discount": ["add","delete","change","view"],
         
-        "products" : ["add","delete","change","view"],
-        "varients" : ["add","delete","change","view"],
-        "varients images" : ["add","delete","change","view"], 
-        "album" : ["add","delete","change","view"], 
+        "product" : ["add","delete","change","view"],
+        "varient" : ["add","delete","change","view"],
+        "product images" : ["add","delete","change","view"], 
+        "image album" : ["add","delete","change","view"], 
     },
 
     "Manager": {
-        #django app model specific permissions
-        "locations" : ["view"],
+        "location" : ["view"],
         "custom user" : ["add","delete","change","view"],
+        "discount": ["view"],
 
         "expense" : ["add", "view", "change"],
         "expense types" : ["add", "view", "change"],
         "purchase order" : ["add", "view", "change"],
         "purchase order lines" : ["add", "view", "change"],
-        "receite voucher" : ["add", "view", "change"],
         "return lines" : ["add", "view", "change"],
         "return orders" : ["add", "view", "change"],
         "sales order" : ["add", "view", "change"],
-        "sales order lines" : ["add", "view", "change"],
-        "invoice" : ["add", "view", "change"],
+        "sales order line" : ["add", "view", "change"],
         "payment voucher" : ["add", "view", "change"],
 
-        "products" : ["add","delete","change","view"],
-        "varients" : ["add", "view", "change", "delete"],
-        "varient images" : ["add", "view", "change", "delete"],
+        "product" : ["add","delete","change","view"],
+        "varient" : ["add", "view", "change", "delete"],
+        "product images" : ["add", "view", "change", "delete"],
         "image album" : ["add", "view", "change", "delete"],
-        "varient colors" : ["add", "view", "change", "delete"],
+        "varient color" : ["add", "view", "change", "delete"],
 
     },
 
@@ -61,14 +57,14 @@ GROUPS = {
         "return lines" : ["add", "view"],
         "return orders" : ["add", "view"],
         "sales order" : ["add", "view"],
-        "sales order lines" : ["add", "view"],
-        "invoice": ["add", "view"],
+        "sales order line" : ["add", "view"],
+        "discount": ["view"],
 
-        "products" : ["view"],
-        "varients" : ["view"],
-        "varient images" : ["view"],
+        "product" : ["view"],
+        "varient" : ["view"],
+        "product images" : ["view"],
         "image album" : ["view"],
-        "varient colors" : ["view"],
+        "varient color" : ["view"],
     },
 
     "Accounting": {
@@ -77,42 +73,43 @@ GROUPS = {
         "expense types" : [ "view"],
         "purchase order" : ["view"],
         "purchase order lines" : ["view"],
-        "receite voucher" : ["view"],
         "return lines" : ["view"],
         "return orders" : ["view"],
         "sales order" : ["view"],
-        "sales order lines" : ["view"],
-        "invoice" : ["view"],
+        "sales order line" : ["view"],
         "payment voucher" : ["view"],
+        "discount": ["view"],
     },
     "Contractor": {
         #django app model specific permissions
-        "products" : ["view"],
-        "varients" : ["view"],
-        "varient images" : ["view"],
+        "product" : ["view"],
+        "varient" : ["view"],
+        "product images" : ["view"],
         "image album" : ["view"],
-        "varient colors" : ["view"],
+        "varient color" : ["view"],
+        "discount": ["view"],
     },
-    "Customers": {
+    "Customer": {
         #django app model specific permissions
-        "products" : ["view"],
-        "varients" : ["view"],
-        "varient images" : ["view"],
+        "product" : ["view"],
+        "varient" : ["view"],
+        "product images" : ["view"],
         "image album" : ["view"],
-        "varient colors" : ["view"],
+        "varient color" : ["view"],
+        "discount": ["view"],
     },
 }
 
 
 USERS = {
-    "jenn" : ["Manager","member@domain.cu","1234"],
+    "jenn" : ["Manager","manager@gmail.com","1234"],
     "john" :  ["Administration","admin@domain.ca","1234"],
-    "admin" : ["Administration","elmer@domain.cu","1234"],
+    "admin" : ["Administration","elmer@gmail.com","1234"],
 }
 
 
 class Command(BaseCommand):
-    help = "Create read only default permission groupd for users"
+    help = "Create read only default permission group for users"
 
     def handle(self, *args, **options):
 
@@ -128,7 +125,7 @@ class Command(BaseCommand):
                     #GENERATE PERMISSION NAMEAS DJANGO WOULD GENERATE IT
                     name = "Can {} {}".format(permission_name, app_model)
                     # codename = "".format()
-                    # ct = ContentType.objects.get_for_model(CustomLocationUser)
+                    ct = ContentType.objects.get_for_model(CustomUser)
                     print("Creating {}".format(name))
                     # print(ct)
 

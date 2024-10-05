@@ -51,7 +51,7 @@ DEBUG = True
 
 #This will be UNCOMENTED for Production
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
-# ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ["localhost", "192.168.8.160"]
 
 # Application definition
 WHITENOISE_MIMETYPES = {
@@ -75,31 +75,66 @@ WHITENOISE_MIMETYPES = {
 # }
 # else:
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-        'rest_framework.permissions.AllowAny',
+        # 'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        # 'knox.auth.TokenAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
-    ]
+    'DEFAULT_RENDERER_CLASSES':[
+        'rest_framework.renderers.JSONRenderer'
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    "PAGE_SIZE":12
 }
-
 
 # OIDC_KEY =  Path(str(BASE_DIR)+'oidc.key').read_text()
-OAUTH2_PROVIDER = {
-    # this is the list of available scopes
-    # "OIDC_ENABLE":True,
-    # "OIDC_RSA_PRIVATE_KEY": OIDC_KEY,
-    'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+# OAUTH2_PROVIDER = {
+#     # this is the list of available scopes
+#     # "OIDC_ENABLE":True,
+#     # "OIDC_RSA_PRIVATE_KEY": OIDC_KEY,
+#     # 'RESOURCE_SERVER_INTROSPECTION_URL': 'http://127.0.0.1:8000/o/login/',
+#     # 'RESOURCE_SERVER_AUTH_TOKEN': 'auth_server_admin_token',
+#     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+# }
 
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'my-app-auth',
+    'JWT_AUTH_HTTPONLY':False,
+    'REGISTER_SERIALIZER': 'dj_rest_auth.registration.serializers.RegisterSerializer',
+    'LOGOUT_ON_PASSWORD_CHANGE': True,
+    'JWT_AUTH_SAMESITE': 'strict',
+    'JWT_AUTH_RETURN_EXPIRATION': False
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    # "SIGNING_KEY": SECRET_KEY,
+}
+
+REST_USE_JWT= True
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 
+
+AUTHENTICATION_BACKENDS = [
+    # Uncomment following if you want to access the admin
+    'allauth.account.auth_backends.AuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_USER_MODEL_EMAIL_FIELD = None
 
 LOGIN_URL = '/admin/login/'
 
 INSTALLED_APPS = [
-    'rest_framework',
+    'api.apps.ApiConfig',
     'sorl.thumbnail',
     'corsheaders',
     'django.contrib.staticfiles',
@@ -108,12 +143,20 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sites',
+    # 'oauth2_provider',
+    'rest_framework',
     'rest_framework.authtoken',
-    'api.apps.ApiConfig',
-    # 'knox',
-    'oauth2_provider',
-    'IMS'
+    'rest_framework_simplejwt',
+    'dj_rest_auth',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'dj_rest_auth.registration',
+    'rest_framework_simplejwt.token_blacklist',
 ]
+
+SITE_ID = 1
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
@@ -125,10 +168,11 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 ROOT_URLCONF = 'fourever.urls'
 
 TEMPLATES = [
@@ -157,10 +201,7 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#         'OPTIONS': {
-#             'timeout': 20,
-#         }
+#         "NAME": os.path.join(BASE_DIR, "db.sqlite3")
 #     }
 # }
 
@@ -215,7 +256,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/El_Salvador'
 
 USE_I18N = True
 
@@ -225,19 +266,21 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# Base URL to server media files 
+MEDIA_URL = '/media/'
+
+# path where media is stored
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+MEDIAFILES_DIRS = [
+    os.path.join(BASE_DIR, "media")
+]
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     os.path.join(BASE_DIR, "media/static"),
-]
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-MEDIA_URL = '/media/'
-
-MEDIAFILES_DIRS = [
-    os.path.join(BASE_DIR, "media")
 ]
 
 #################### django resize ###############################
