@@ -78,7 +78,7 @@ class VarientView(APIView):
 
             data["varientImage"].update({
                 "cf_id": presignedUrl["id"],
-                "link":f"https://{url}/{account_hash}/{presignedUrl["id"]}/public"
+                # "link":f"https://{url}/{account_hash}/{presignedUrl["id"]}/public"
             })
 
         serializer = self.varientSerializer(data=data)

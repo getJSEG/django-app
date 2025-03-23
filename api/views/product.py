@@ -66,9 +66,11 @@ class ProductView(APIView):
             url = settings.CLOUDFLARE_IMAGES_DOMAIN
             account_hash = settings.CLOUDFLARE_ACCOUNT_HASH
 
+            print(presignedUrl)
+
             item["varientImage"].update({
                 "cf_id": presignedUrl["id"],
-                "link":f"https://{url}/{account_hash}/{presignedUrl["id"]}/public"
+                # "link":f"https://{url}/{account_hash}/{presignedUrl.get("id", None)}/public"
             })
 
         with transaction.atomic():

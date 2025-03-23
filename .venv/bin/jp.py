@@ -1,4 +1,4 @@
-#!/Users/elmergonzalez/fourever/.venv/bin/python3.12
+#!/Users/elmergonzalez/fourever/.venv/bin/python3
 
 import sys
 import json
