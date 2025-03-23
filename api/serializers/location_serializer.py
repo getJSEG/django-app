@@ -17,11 +17,11 @@ class LocationSerializer(serializers.ModelSerializer):
 class CreateLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ('location_type', 'incharge', 'email', 'address', 'city', 'department', 'store_number',
-                  'country','status','profit_center', 'cost_center', 'status_date', 'local_tax', 'pre_tax_items')
+        fields = ('locationType', 'incharge', 'email', 'address', 'city', 'department', 'storeNumber',
+                  'country','status', 'cost_center', 'dateCreated', 'tax', 'isPreTax')
         extra_kwargs = {
-            "local_tax": { "required" : False },
-            "pre_tax_items": { "required" : False }, 
+            "tax": { "required" : False },
+            "isPreTax": { "required" : False }, 
             "email": { "required" : False },
             "phone": { "required" : False }
         }
@@ -35,7 +35,7 @@ class CreateLocationSerializer(serializers.ModelSerializer):
         department = attrs.get('department', '').title()
         city = attrs.get('city', '').title()
         country = attrs.get('country', '').title()
-        location_type = attrs.get('location_type', '').title()
+        location_type = attrs.get('locationType', '').title()
         status = attrs.get('status', '').strip().title()
 
         # if Locations.objects.filter(email__iexact=lower_email).exists():
@@ -46,7 +46,7 @@ class CreateLocationSerializer(serializers.ModelSerializer):
         attrs['city'] = city
         attrs['department'] = department
         attrs['country'] = country
-        attrs['location_type'] = location_type
+        attrs['locationType'] = location_type
         attrs['status'] = status
         attrs['email'] = lower_email
 
@@ -58,7 +58,7 @@ class UpdateLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ('incharge', 'email', 'phone', 'status','profit_center', 'address', 'city', 'department',
-                  'cost_center', 'status_date', 'local_tax', 'pre_tax_items')
+                   'tax', 'isPreTax')
     
     def validate(self, attrs):
 

@@ -20,6 +20,9 @@ import mimetypes
 import sys #INSTALL THIS Library
 import pyrebase
 import os
+from dotenv import load_dotenv
+
+# from decouple import config
 
 mimetypes.add_type("text/css", ".css", True)
 
@@ -76,6 +79,7 @@ WHITENOISE_MIMETYPES = {
 # else:
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'api.authenticate.CustomAuthentication',
         'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         # 'rest_framework.authentication.SessionAuthentication',
@@ -112,11 +116,18 @@ REST_AUTH = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_COOKIE': 'access_token',  # Cookie name for access token
+    'AUTH_COOKIE_REFRESH': 'refresh_token', # Cookie name for refresh token
+    'AUTH_COOKIE_DOMAIN': None, 
+    'AUTH_COOKIE_PATH': '/', 
+    'AUTH_COOKIE_SECURE': False,  # Only send cookies over HTTPS
+    'AUTH_COOKIE_HTTP_ONLY': True, # Prevent client-side JavaScript access
+    'AUTH_COOKIE_SAMESITE': 'Lax',
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": ("Bearer",)
     # "SIGNING_KEY": SECRET_KEY,
 }
 
@@ -154,10 +165,11 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'dj_rest_auth.registration',
     'rest_framework_simplejwt.token_blacklist',
+    'adrf',
 ]
 
 SITE_ID = 1
-
+# APPEND_SLASH=False
 AUTH_USER_MODEL = 'api.CustomUser'
 
 MIDDLEWARE = [
@@ -166,7 +178,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     # 'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -353,3 +365,11 @@ CORS_ALLOW_HEADERS = [
 
 
 # DISABLE_COLLECTSTATIC = os.getenv("DEVELOPMENT_MODE", 1) == 1
+
+load_dotenv()
+
+CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+CLOUDFLARE_API_KEY = os.environ.get("CLOUDFLARE_API_KEY")
+CLOUDFLARE_ACCOUNT_HASH = os.environ.get("CLOUDFLARE_ACCOUNT_HASH")
+CLOUDFLARE_IMAGES_DOMAIN = os.environ.get("CLOUDFLARE_IMAGES_DOMAIN")
+CLOUDFLARE_EMAIL = os.environ.get("CLOUDFLARE_EMAIL")

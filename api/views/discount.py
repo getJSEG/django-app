@@ -13,29 +13,36 @@ from ..serializers import discount_serializer
 
 from ..models import Discount
 
+from ..repeated_responses.repeated_responses import not_assiged_location, emptyField, denied_permission, expired, does_not_exists, already_exists
+
 class GetDiscountView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        if not request.user.has_perm('api.view_discount'):
-          return Response({'message': 'permission Denied'}, status=status.HTTP_401_UNAUTHORIZED)
 
+        if not request.user.has_perm('api.view_discount'):
+          return denied_permission()
+        # TODO: UPPER CASE THE EVRYTHING
+        # TODO: REMOVE ANY COMAS, AND DOTS WHEN GETTING ND CREATING
         discount_code = request.GET.get('discount_code')
+        print(discount_code)
 
         if discount_code and discount_code != '':
             queryset = Discount.objects.filter(discount_code__contains=discount_code)
 
+        print(queryset)
+
         if not queryset.exists():
-           return Response({'message': "Does not Exist"}, status=status.HTTP_400_BAD_REQUEST)
+           return does_not_exists()
         
         if queryset[0].expiration < datetime.now(tz=timezone.utc):
-           return Response({'message': "Discount Expired"}, status=status.HTTP_400_BAD_REQUEST)
+           return expired()
            
         serializer = discount_serializer.GetDiscountSerializer(queryset[0])
         
-        return Response({'message': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
 
 
 #TODO: Use Atomic WHE CREATING THIS 
@@ -46,13 +53,13 @@ class CreateDiscountView(APIView):
 
     def post(self, request, format=None):
         if not request.user.has_perm('api.add_discount'):
-          return Response({'message': 'permission Denied'}, status=status.HTTP_401_UNAUTHORIZED)
+          return denied_permission()
         
         #get code
         discount_code = Discount.objects.filter(discount_code=request.data['discount'])
 
         if discount_code.exists():
-            return Response({'message': "Discount code already exist"}, status=status.HTTP_400_BAD_REQUEST)
+            return already_exists()
 
         data = request.data.copy()
         datetime_str = data['expiration']
@@ -78,7 +85,7 @@ class DeleteDiscount(APIView):
     def delete(self, request, pk, format=None):
         #permission
         if not request.user.has_perm('api.delete_discount'):
-          return Response({'message': 'permission Denied'}, status=status.HTTP_401_UNAUTHORIZED)
+          return denied_permission()
 
         # id = request.GET.get('id')
 
@@ -88,7 +95,7 @@ class DeleteDiscount(APIView):
         discount = Discount.objects.filter(id = pk)
 
         if not discount.exists():
-           return Response({'message': "Discount Does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+           return does_not_exists()
         
         discount.delete()
         

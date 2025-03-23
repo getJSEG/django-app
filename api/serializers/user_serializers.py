@@ -10,6 +10,8 @@ from ..models import CustomUser
 #get the USER information
 # TESTING ONLY
 class UserSerializer(serializers.ModelSerializer):
+    groups = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+
     class Meta:
         model = CustomUser
         fields = ['id','username','first_name','last_name', 'is_active', 'avatar', 'location', 'create_on', 'groups']

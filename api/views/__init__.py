@@ -5,4 +5,6 @@ from .user import *
 from .session_auth import *
 from .pos_system import *
 from .discount import *
-from . accounting import *
+from .accounting import *
+from .Products import *
+from .shipping import *

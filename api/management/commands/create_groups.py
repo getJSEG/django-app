@@ -33,7 +33,8 @@ GROUPS = {
         "location" : ["view"],
         "custom user" : ["add","delete","change","view"],
         "discount": ["view"],
-
+        "tags": ["add", "view", "change"],
+        "categories": ["add", "view", "change"],     
         "expense" : ["add", "view", "change"],
         "expense types" : ["add", "view", "change"],
         "purchase order" : ["add", "view", "change"],
@@ -43,6 +44,7 @@ GROUPS = {
         "sales order" : ["add", "view", "change"],
         "sales order line" : ["add", "view", "change"],
         "payment voucher" : ["add", "view", "change"],
+        "transaction receipt" : ["view"],
 
         "product" : ["add","delete","change","view"],
         "varient" : ["add", "view", "change", "delete"],
@@ -59,7 +61,8 @@ GROUPS = {
         "sales order" : ["add", "view"],
         "sales order line" : ["add", "view"],
         "discount": ["view"],
-
+        "tags": ["add", "view"],
+        "categories": ["add", "view"],
         "product" : ["view"],
         "varient" : ["view"],
         "product images" : ["view"],

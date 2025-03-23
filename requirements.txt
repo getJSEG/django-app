@@ -10,14 +10,19 @@ click==8.1.7
 cryptography==42.0.2
 cs50==9.3.0
 dj-database-url==2.1.0
+dj-rest-auth==6.0.0
 Django==4.2.7
+django-allauth==65.0.2
 django-cors-headers==4.3.1
+django-environ==0.11.2
 django-haystack==3.2.1
 django-resized==1.0.2
 django-rest-knox==4.2.0
 django-storages==1.14.2
 djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
 drf-extra-fields==3.7.0
+drf-writable-nested==0.7.0
 drf_base64==2.0
 filetype==1.2.0
 Flask==3.0.0
@@ -43,6 +48,7 @@ pyasn1==0.6.0
 pyasn1_modules==0.4.0
 pycparser==2.21
 pycryptodome==3.11.0
+PyJWT==2.9.0
 pyOpenSSL==24.0.0
 pyparsing==3.1.2
 Pyrebase4==4.7.1
@@ -52,6 +58,7 @@ python-jwt==4.1.0
 pytz==2023.3.post1
 requests==2.29.0
 requests-toolbelt==0.10.1
+rest-framework-simplejwt==0.0.2
 rsa==4.9
 s3transfer==0.10.1
 setuptools==69.2.0

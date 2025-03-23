@@ -3,7 +3,7 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView, DestroyAPIView, RetrieveAPIView
-
+from django.db.models import Q
 from ..helper import store_number_generator
 
 # Authentication and permissions
@@ -18,7 +18,7 @@ from ..serializers import location_serializer
 
 
 # this returns all of the information from ALLL locations this will not be 
-class LocationView( APIView):
+class LocationView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -39,9 +39,32 @@ class LocationView( APIView):
         #     return Response({"message": "You dont have permission"}, status=status.HTTP_403_FORBIDDEN)
 
         # results = Location.objects.filter(city__icontains=request.GET.get('city') ) 
-        results = Location.objects.filter(id=user.location.id ) 
+        results = Location.objects.filter(id=user.location.id )
+        # If it donse exist the return empmty object
+        if not results.exists():
+            return Response({"data": {}}, status=status.HTTP_400_BAD_REQUEST)
         # results = Locations.objects.filter(city__icontains=user.location.id)
+        result = results[0]
         # queryset = Locations.objects.all()
+        location = location_serializer.LocationSerializer(result)
+
+        return Response(location.data, status=status.HTTP_200_OK)
+
+
+# TODO: check if the query is one and set it to empty string this way the front end doesen require it to accep the research
+# aslo wrsp this is a try except method
+class SearchLocation(CreateAPIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, forman=None):
+        city = request.GET.get('city')
+        country = request.GET.get('country')
+        storeNumber = request.GET.get('storeNumber')
+
+        results = Location.objects.filter(Q(city__icontains= city) | Q(country__icontains=country) | Q(storeNumber__icontains=storeNumber))
+
         locations = location_serializer.LocationSerializer(results, many=True)
 
         return Response({"data": locations.data }, status=status.HTTP_200_OK)
@@ -66,18 +89,18 @@ class CreateLocationView( CreateAPIView):
             data = request.data.copy()
             
             country = str(data["country"])
-            location_type = str(data["location_type"])
+            location_type = str(data["locationType"])
 
             store_number = store_number_generator(location_type, country)
-            location = location = Location.objects.filter(store_number = store_number)
+            location = Location.objects.filter(storeNumber = store_number)
 
             if not location.exists():                                                       #if the location does not exist on first search same the store_number
-                data["store_number"] = store_number
+                data["storeNumber"] = store_number
             else:
                 while location.exists():                                                    #else loop until you get a new store number that does not exist
                     store_number = store_number_generator(location_type, country)
-                    location = Location.objects.filter(store_number = store_number)
-                data["store_number"] = store_number
+                    location = Location.objects.filter(storeNumber = store_number)
+                data["storeNumber"] = store_number
 
             serializer = self.serializer_class(data=data)   
 

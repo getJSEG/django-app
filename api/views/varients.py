@@ -1,224 +1,185 @@
 from rest_framework import  status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.pagination import PageNumberPagination
-from django.db import IntegrityError, transaction
 from django.db import transaction
-from django.db.models import F
+from django.db import transaction
+from django.db.models import Q
 
-import re
-import os
 import uuid
+import requests
 
 #this is the new session Authentication
 from rest_framework import permissions
+from urllib.parse import urlencode
 
-#### MODELS ######
-from ..models import ProductAttribute                                #product
 ##### SERIALIZERZ #####
-from ..serializers import varients_serializer
-from ..serializers import product_serializer as productSerializer
+from ..serializers import product_serializer
+from ..models import Varient, Product
 
-from ..helper import generate_sku
+from ..helper import generate_sku, generate_presign_url
+from django.conf import settings
 
-#CREATING VARIENT
-class CreateVarientView(APIView):
+# Functions
+from ..repeated_responses.repeated_responses import not_assiged_location, denied_permission, does_not_exists, invalid_uuid, emptyField, varient_already_exists
+from ..helper_classes.varients import required_info_Validation, cleanString, info_require_for_update
+
+# This Create Varient
+# TODO: If theirs not varientImage dont send to get a presign url
+# TODO: Product info get removed when updating
+class VarientView(APIView):
 
     # Require Authentication
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    varientSerializer = product_serializer.VariantOnlySerializer
 
+    def post(self, request, format=None):
+
+        # Checking Permission
         if not request.user.has_perm('api.add_varient'):
-            return Response({"message": 'Permission Denied'}, status=status.HTTP_403_FORBIDDEN) 
-        try:
-            # check for validity of Uuid
-            uuid_obj = uuid.UUID(pk, version=4)
-        except ValueError:
-            return Response({"message": "product ID is not valid" },status=status.HTTP_400_BAD_REQUEST)
+            return denied_permission()
 
         data = request.data.copy()
-        print(data)
-        # Spliting Data
-        varient_color_data = {} # This is going to be the varient Color Data
-
-        productAttr = ProductAttribute.objects.filter(product=pk)
-
-        if not productAttr.exists():
-            return Response({"message": "No Products was found"}, status=status.HTTP_400_BAD_REQUEST)    #checks if the varient exits
-        
-        # Filtering the data for the varient Color
-        if 'image' in data:
-            # Create the color varient 
-            image  = data.pop('image')
-            if not len(image) == 0:
-                varient_color_data['image'] = image[0]
-        # Checking Color
-        if not 'color' in data:
-            return Response({"message": "Color is required"}, status=status.HTTP_400_BAD_REQUEST)
-        # Checking Size
-        if not 'size' in data :
-            return Response({"message": "Size is Required"}, status=status.HTTP_400_BAD_REQUEST)  
-        # checking if theirs is a price with this varient
-        if not 'price' in data: 
-            data['price'] = productAttr.product.price
-        
-        # Generating an SKU and making is lowercase
-        try: 
-            sku = generate_sku(productAttr[0].product.name,
-                               productAttr[0].product.brand, 
-                               data["size"], 
-                               data["color"], 
-                               productAttr[0].product.id).lower()
-        except:
-            return Response({"message": "Please dont input similar data as other varients"}, status=status.HTTP_400_BAD_REQUEST) 
-        
-        varient_color_data['color'] = str(data.pop('color')[0]) 
+        product_id = data["product"]
         try:
-            with transaction.atomic():
-
-                # Saving Varient Color
-                varientColor_serializer = varients_serializer.VarientColorSerializer(data=varient_color_data)
-
-                if varientColor_serializer.is_valid(raise_exception=True):
-                    varientColor_serializer.save()
-                else:
-                    return Exception(varientColor_serializer.errors)
-                
-                # adding the Autogenerates info to the Data dict
-                data["sku"] = sku
-                data['varient_color'] = varientColor_serializer.data["id"]
-                data["location_id"] = productAttr[0].product.location_id.id
-                # Creating Varient
-                serializer = varients_serializer.CreateVarientSerializer(data=data)
-
-                if serializer.is_valid(raise_exception=True):
-                    serializer.save()
-                else:
-                    raise Exception(serializer.errors)
-
-                varient_id = serializer.data["id"]
-
-                productAttr[0].varients.add(varient_id) 
-                productAttr[0].save()
-
-        except IntegrityError as e:
-            return Response({"message": "somthing wen wrong saving varient" },status=status.HTTP_400_BAD_REQUEST)
+            uuid_obj = uuid.UUID(product_id, version=4) #Value Error
+        except:
+            return invalid_uuid()
         
-        return Response({"message": "Varient created successfully"}, status=status.HTTP_201_CREATED)
+        product = Product.objects.filter(Q(id=product_id))
 
+        if not product.exists():
+            return does_not_exists()
+
+        # Validation required Infor
+        is_info_valid, info_err_message = required_info_Validation(data)
+        if not is_info_valid:
+            return Response({"data": { "message": info_err_message}}, status=status.HTTP_400_BAD_REQUEST)
+
+        sku = generate_sku(product[0].name, product[0].brand, data['size'], data['color'], product[0].id)
+        data["sku"] = sku
+        varientFound = Varient.objects.filter(Q(sku__icontains=sku))
+
+        if varientFound.exists():
+            return varient_already_exists()
+        
+        if 'varientImage' in data:
+            # A list of presigned url to sen to the front end
+            presignedUrlList = []
+            # Sending request to get presined URL
+            presignedUrl = generate_presign_url()
+            presignedUrlList.append(presignedUrl["uploadURL"])
+
+            url = settings.CLOUDFLARE_IMAGES_DOMAIN
+            account_hash = settings.CLOUDFLARE_ACCOUNT_HASH
+
+            data["varientImage"].update({
+                "cf_id": presignedUrl["id"],
+                "link":f"https://{url}/{account_hash}/{presignedUrl["id"]}/public"
+            })
+
+        serializer = self.varientSerializer(data=data)
+
+        with transaction.atomic():
+            if  serializer.is_valid(raise_exception=True):
+                    serializer.save()
+            else:
+                raise Exception(serializer.errors)
+        
+        return Response({"data": {"message": "Variente Creado Exitosamente", "upload": presignedUrlList}}, status=status.HTTP_201_CREATED)
+
+
+
+# TODO: Make Sure the SKU is regenerated if the item color and size is change else dont change
 #updating view
 class UpdateVarientView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    serializer = varients_serializer.VarientColorSerializer
-    
-    def patch(self, request, product, pk, *args, **kwargs):
+    varientSerializer = product_serializer.VariantOnlySerializer
 
+    def patch(self, request, *args, **kwargs):
+        user = request.user
         # Checking permissions
-        if not request.user.has_perm('api.change_varient'):
-            return Response({'message': 'Permission Denied'}, status=status.HTTP_403_FORBIDDEN)
-
+        if not user.has_perm('api.change_varient'):
+            return denied_permission()
+        
+        variantId = request.GET.get('variant').strip()
         data = request.data.copy()
+        
+        if_info_valid, update_infor_err_msg = info_require_for_update(variantId, data)
+        if not if_info_valid:
+            return Response({"data": { "message": update_infor_err_msg}}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # This Removes the Variant Image we are not updating image in this view
+        if "varientImage" in data:
+            data.pop('varientImage')
+
         try:
-            productAttr = ProductAttribute.objects.get(product__id=product)
+            product_uuid = uuid.UUID(variantId, version=4)
         except:
-            return Response({"message": 'Product Was not Found'}, status=status.HTTP_400_BAD_REQUEST)
+            return invalid_uuid()
         
+        try: variant_instance = Varient.objects.get(Q(id=variantId))
+        except: return does_not_exists()
+
+        serializer = self.varientSerializer(instance=variant_instance, data=data, partial=True)
         try:
-            varient_instance = productAttr.varients.get(id=pk)
-        except:
-            return Response({"message": 'Varient Was not Found'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if "color" in data or 'image' in data:
-            # TODO: update color varient
-            color_varient_serializer = varients_serializer.VarientColorSerializer(instance=varient_instance.varient_color, data=data, partial=True)
-            
-            if color_varient_serializer.is_valid():
-                color_varient_serializer.save()
-            else: 
-                return Response({'error': color_varient_serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not "color" in data: 
-            color = varient_instance.varient_color.color
-        else: 
-            color = data["color"]
+            with transaction.atomic():
+                if  serializer.is_valid(raise_exception=True):
+                        serializer.save()
+                else:
+                    raise Exception(serializer.errors)
+        except (Exception, ValueError) as e:
+            return Response({"data": {"message": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not "size" in data: 
-            size = varient_instance.size
-        else: 
-            size = data["size"]
-
-        sku = generate_sku(productAttr.product.name, productAttr.product.brand, size, color, productAttr.product.id)
-        data['sku'] = sku
-
-        #updating the varient
-        varient_serializer = varients_serializer.UpdatedVarientSerializer(instance=varient_instance, data=data, partial=True)
-
-        if varient_serializer.is_valid():
-                varient_serializer.save()
-        else: 
-            return Response({'error': varient_serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response({'message': 'Updated' }, status=status.HTTP_200_OK)
+        return Response({'data': { "message" : "Actualizado Exitosamente"} }, status=status.HTTP_200_OK)
 
 
-# TODO: Check if the varient gets deleted
-class DeleteVarientView(RetrieveAPIView):
+#This View Delete Varients
+class DeleteVarientView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, product, pk, *args, **kwargs):
+    def delete(self, request, pk ,*args, **kwargs):
         # Check Premission for the user
-        if not request.user.has_perm('api.delete_varient'):
-            return Response({"message": 'Permission Denied'}, status=status.HTTP_403_FORBIDDEN) 
+        user = request.user
+        if not user.has_perm('api.delete_varient'):
+            return denied_permission()
+
+        # variantId = request.GET.get('variant') 
+        variantId = pk
+
+        if not variantId:
+            return Response({"data": {"message":'Informacion Requerida'}}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            productAttr = ProductAttribute.objects.get(product=product)
-        except:
-            return Response({"message": 'Product Was not Found'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            varient = productAttr.varients.get(id=pk)
-        except:
-            return Response({"message": 'Product Does not have this varient'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        varient.delete()
+            variant = Varient.objects.get(id=variantId)
+
+            if (len(variant.product.variants.all()) == 1):
+                return Response({"data": {"message": 'No Puedes Borrar Variente porque solo hay 1'}}, status=status.HTTP_400_BAD_REQUEST)
+            # send the link to cloudflare
+            if (variant.varientImage):
+                if(variant.varientImage.cf_id):
+                    url = f"https://api.cloudflare.com/client/v4/accounts/{settings.CLOUDFLARE_ACCOUNT_ID}/images/v1/{variant.varientImage.cf_id}"
+                    headers = {"Authorization": f"Bearer {settings.CLOUDFLARE_API_KEY}"}
+                    response = requests.delete(url, headers=headers)
+
+                    response.raise_for_status()
+                    if response.status_code >= 200 and response.status_code <= 299:
+                        with transaction.atomic():
+                            variant.varientImage.delete()
+                    else:
+                        return Response({"data": { "message": 'No se puede borrar variente en este momento, Intente despues.' }}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            with transaction.atomic():
+                variant.delete()
+        except Exception as e:
+            return Response({"data": { "message": str(e) } } , status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# Return all products that are under a certain stock level
-# No Pagination
-class LowStockLevel(ListAPIView):
-
-    queryset = ProductAttribute.objects.all().order_by('product__created_on')
-    serializer_class =  productSerializer.GetProductReducedSerializer
-    paginate_by = 10
-
-    def get(self, request, format=None):
-        if not request.user.has_perm('api.view_product'):
-            return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-        
-        user = request.user
-
-        if not user.location:
-            return Response({'message': 'You are not assign to a store'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        queryset = self.queryset.filter(varients__units__lte = F('varients__min_units') , product__location_id= user.location.id)
-
-        if not queryset.exists():
-            return Response({'message': "Not Products Found"}, status=status.HTTP_200_OK)
-        
-        # results =  self.paginate_queryset(productsAttr, request, view=self)
-        serializer = self.serializer_class(queryset, many=True)
-        # response = self.get_paginated_response(serializer.data)
-
-        return  Response(serializer.data, status=status.HTTP_200_OK)
