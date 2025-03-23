@@ -6,3 +6,8 @@ IMS
 media/
 pyvenv.cfg
 /media/git
+
+
+# git push -u origin master
+# git push origin HEAD:main 
+# git branch -m main 
