@@ -4,5 +4,5 @@ IMS
 .venv
 .env
 media/
-pyvenv.cgf
+pyvenv.cfg
 /media/git
