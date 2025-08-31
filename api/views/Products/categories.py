@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Q, F, Sum, Count, Avg
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from ...authenticate import CustomAuthentication
 
 # Import serilizer
 from ...serializers import product_serializer
@@ -14,7 +14,7 @@ from ...models import Categories
 
 class CategoryView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     categorySerializer  = product_serializer.CategorySerializer

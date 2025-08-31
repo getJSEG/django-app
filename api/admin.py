@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, SalesReceipt, ReceiptLine, Varient, Images, Product, ExpenseTypes, Expense, PurchaseOrder, PurchaseOrderLines, Tags, Categories, CustomShipping, ParselShipping, Customer, PaymentMethod, CashPayment, CreditCardPayment, TransferPayment
+from .models import (CustomUser, Order, ReceiptLine, Varient, Images, Product, ExpenseTypes, Expense, PurchaseOrder, PurchaseOrderLines, Tags, Categories, CustomShipping, ParselShipping, Customer, 
+                     CashPayment, CreditCardPayment, BankTransferPayment)
 from django.forms import Textarea, TextInput
+# from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 # Register your models here.
 # class UserAdminConfig(UserAdmin):
@@ -15,15 +17,16 @@ from django.forms import Textarea, TextInput
 #     #     ('Personal', {'fields': ('date_joined',)}),
 #     # )
 
+
 admin.site.register(CustomUser)
-admin.site.register(SalesReceipt)
+admin.site.register(Order)
 admin.site.register(ReceiptLine)
 admin.site.register(CustomShipping)
 admin.site.register(ParselShipping)
-admin.site.register(PaymentMethod)
+# admin.site.register(Payment)
 admin.site.register(CashPayment)
 admin.site.register(CreditCardPayment)
-admin.site.register(TransferPayment)
+admin.site.register(BankTransferPayment)
 admin.site.register(Customer)
 # admin.site.register(TransactionReceipt)
 admin.site.register(Varient)

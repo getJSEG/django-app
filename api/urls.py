@@ -8,7 +8,8 @@ import dj_rest_auth
 # from rest_framework_simplejwt.views import TokenVerifyView
 # from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import pos_system, product, varients, location, user, discount, accounting, shipping
+from .views import pos_system, product, varients, location, user, discount, shipping, accounting, customer
+# from .views.shipping import shipping
 from .views.Products import tags, categories
 
 
@@ -25,6 +26,7 @@ urlpatterns = [
     path('logout', user.userLogoutView.as_view()),                                                                   #this only black list the JWT
     path('profile', user.GetUserProfileView.as_view(), name="profile"),
     path('user/update', user.UpdateUserinformationView.as_view()),
+    path('user/roles', user.getUserRoles.as_view()),
     #locations
     path('location/create', location.CreateLocationView.as_view()),
     path('location', location.LocationView.as_view()),
@@ -50,6 +52,7 @@ urlpatterns = [
     path('pos/products', pos_system.PointOfSalesProductsView.as_view()),
     # Accounting
     path('accounting/revenue', accounting.IncomeView.as_view()),
+    path('accounting/sales-by-category', accounting.salesbyCategory.as_view()),
     # path('accounting/transaction-history', accounting.TransactionHistory.as_view()),
     path('accounting/purchaseOrder', accounting.PurchaseOrderView.as_view()),
     path('accounting/expenses', accounting.ExpensesView.as_view()),
@@ -57,10 +60,14 @@ urlpatterns = [
     # Handling Shipping Here
     path('shipping/regular', shipping.RegularShippingView.as_view()),
     path('shipping/parcel', shipping.ParselShippingView.as_view()),
-    path('shipping/tracker', shipping.TrackShippingView.as_view()),
+    path('shipping/tracker', shipping.TrackShippingView.as_view()), #change to retrive all-packages
+    path('packages/recently-created', shipping.RetriveRecentlyCreatedPackages.as_view()),
     #DISCOUNT
     path('discount', discount.GetDiscountView.as_view()),
     path('create/discount', discount.CreateDiscountView.as_view()),
     path('delete/discount/<str:pk>', discount.DeleteDiscount.as_view()),
+
+    # customer
+    path('customer/search', customer.customerView.as_view())
 
 ]

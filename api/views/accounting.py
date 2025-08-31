@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from ..authenticate import CustomAuthentication
 
 from datetime import datetime, timedelta, date, time
 from django.db.models.functions import TruncDate
@@ -18,60 +19,53 @@ from django.db.models import Sum
 #MODELS
 from ..models import  PurchaseOrder, Expense
 
-from ..models import  SalesReceipt
+from ..models import  Order
 
 from ..repeated_responses.repeated_responses import not_assiged_location, denied_permission, emptyField
 
 from ..serializers import accounting_serializer
 
 
-
-
-# this gets all of the revenue by the current month
+# this gets all of the income by month
+# from Jan - Dec ( month name in spanish)
 class IncomeView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-
         # Get the user location ID
         try:
-           locationID = request.user.location.id
+           location_id = request.user.location.id
         except:
             return not_assiged_location()
         
-        # Gets the income for 30, 60, 360 days
-        today = date.today()
-        monthData = []
+        month = ["Ene", "Feb", "Mar", "Abri", "May", "Jun", "Jul", "Ago", " Sep", "Oct", "Nov", "Dic"]
+      
+        response_data = []
+        total_amount = 0
+        datetime_year= datetime.today().strftime("%Y")
+        datetime_month = int(datetime.today().strftime("%m"))
 
-        # Get the first day of the month
-        first_day_of_month = date(today.year, today.month, 1)
-        # Get last day fo the month
-        if today.month == 12:
-            last_day_of_month = date(today.year, 12, 31)
-        else:
-            last_day_of_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
+        # This options get the sales for each month - today date
+        for datetime_month in range(0, 12):
+            transInstance = Order.objects.filter(location_id = location_id, dateCreated__month=datetime_month)
+            month_name = month[datetime_month]
+            if transInstance.exists():
+                total_amount = { "mes": month_name , 
+                                  "ventas" : transInstance.aggregate(total=Sum("totalAmount"))["total"]}
+            else:
+                total_amount = { "mes" : month_name, "ventas" : 0 }
 
-        # loop trought all the days and sum up all of the sales for current days
-        current_day = first_day_of_month
+            response_data.append(total_amount)
 
-        while current_day <= last_day_of_month:
-            daily_data = SalesReceipt.objects.filter(Location = locationID).filter(dateCreated__date=current_day)
-            # print(current_day)
-            monthData.append({ 
-                "label": current_day,
-                "value" : daily_data.aggregate(total = Sum("totalAmount"))['total'] or 0
-            })
-            current_day += timedelta(days=1)
-
-        return Response(monthData, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 # Expenses
 class ExpensesView(APIView):
     
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     expesesSerializer = accounting_serializer.ExpensesSerializer
@@ -98,40 +92,127 @@ class ExpensesView(APIView):
                 raise Exception(serializer.errors)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # Getting expenses
+    # Getting All expenses
     def get(self, request, format=None): 
         # Get the user location ID
         try:
-           locationID = request.user.location.id
+           location_id = request.user.location.id
         except:
             return not_assiged_location()
         
-        # Gets the income for the month (30 days)
-        today = date.today()
-        monthData = []
+        month = ["Ene", "Feb", "Mar", "Abri", "May", "Jun", "Jul", "Ago", " Sep", "Oct", "Nov", "Dic"]
+      
+        response_data = []
+        total_amount = 0
+        datetime_year= datetime.today().strftime("%Y")
+        datetime_month = int(datetime.today().strftime("%m"))
 
-        # Get the first day of the month
-        first_day_of_month = date(today.year, today.month, 1)
-        # Get last day fo the month
-        if today.month == 12:
-            last_day_of_month = date(today.year, 12, 31)
-        else:
-            last_day_of_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
+        # This options get the sales for each month - today date
+        for datetime_month in range(0, 12):
+            transInstance = Expense.objects.filter(location_id = location_id, creationDate__month=datetime_month)
+            month_name = month[datetime_month]
+            if transInstance.exists():
+                total_amount = { "mes": month_name , 
+                                  "gastos" : transInstance.aggregate(total=Sum("totalAmount"))["total"]}
+            else:
+                total_amount = { "mes" : month_name, "gastos" : 0 }
 
-        # loop trought all the days and sum up all of the sales for current days
-        current_day = first_day_of_month
+            response_data.append(total_amount)
 
-        while current_day <= last_day_of_month:
-            daily_data = Expense.objects.filter(location = locationID).filter(creationDate__date=current_day)
-            # print(current_day)
-            monthData.append({ 
-                "label": current_day,
-                "value" : daily_data.aggregate(total = Sum("totalAmount"))['total'] or 0
-            })
+        return Response(response_data, status=status.HTTP_200_OK)
 
-            current_day += timedelta(days=1)
 
-        return Response(monthData, status=status.HTTP_200_OK)
+# retriving the sales of the store by category
+# can be select by day, month 6 month or year
+class salesbyCategory(APIView):
+
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request, format=None):
+        # check permission
+        try:
+           location_id = request.user.location.id
+           username = request.user.username
+        except:
+            return not_assiged_location()
+        
+        option = int(request.GET.get('option', 1))
+
+        # get the todays date
+        datenow = datetime.now()
+        revenue = {}
+
+        # This get the sales of the todays date
+        if option == 1:
+            # Filters the revenue of todays date
+            orders = Order.objects.filter(location_id = location_id, dateCreated__date=datetime.now().date()) 
+            if orders.exists():
+                # sum all revenues that are shipping
+                shipping_revenue = orders.filter(paymentExecution="SHIPPING").aggregate(total=Sum("totalAmount"))["total"]
+                # sum all revenues that are total sales
+                instore_revenue = orders.filter(paymentExecution="POS").aggregate(total=Sum("totalAmount"))["total"]
+                total_store_revenue = shipping_revenue + instore_revenue
+                revenue = {
+                    "shippingRevenue": shipping_revenue,
+                    "storeRevenue": instore_revenue,
+                    "totalStoreRevenue": total_store_revenue
+                }
+            else:
+                # return 0
+                revenue = { "shippingRevenue": 0, "storeRevenue": 0, "totalStoreRevenue": 0 }
+        elif option == 2:
+            # this obtion return the sales of the month
+            orders = Order.objects.filter(location_id = location_id, dateCreated__month=datetime.now().month) 
+            if orders.exists():
+                # sum all revenues that are shipping
+                shipping_revenue = orders.filter(paymentExecution="SHIPPING").aggregate(total=Sum("totalAmount"))["total"]
+                # sum all revenues that are total sales
+                instore_revenue = orders.filter(paymentExecution="POS").aggregate(total=Sum("totalAmount"))["total"]
+                total_store_revenue = shipping_revenue + instore_revenue
+                revenue = {
+                    "shippingRevenue": shipping_revenue,
+                    "storeRevenue": instore_revenue,
+                    "totalStoreRevenue": total_store_revenue
+                }
+            else:
+                # return 0
+                revenue = { "shippingRevenue": 0, "storeRevenue": 0, "totalStoreRevenue": 0 }
+        elif option == 4:
+            orders = Order.objects.filter(location_id = location_id, dateCreated__year=datetime.now().year) 
+
+            if orders.exists():
+                # sum all revenues that are shipping
+                shipping_revenue = orders.filter(paymentExecution="SHIPPING").aggregate(total=Sum("totalAmount"))["total"]
+    
+                # sum all revenues that are total sales
+                instore_revenue = orders.filter(paymentExecution="POS").aggregate(total=Sum("totalAmount"))["total"]
+                total_store_revenue = shipping_revenue + instore_revenue
+
+                revenue = {
+                    "shippingRevenue": shipping_revenue,
+                    "storeRevenue": instore_revenue,
+                    "totalStoreRevenue": total_store_revenue
+                }
+            else:
+                # return 0
+                revenue = { "shippingRevenue": 0, "storeRevenue": 0, "totalStoreRevenue": 0 }
+        # this get the revenu of the current year
+            # if transInstance.exists():
+            #     total_amount = { "label": "Today",
+            #                         "value" : transInstance.aggregate(total = Sum("grandTotal"))["total"] }
+            # else:
+            #     total_amount = { "label": "Today", 
+            #                         "value" : 0 }
+            
+            # response_data.append( total_amount )
+
+
+        return Response(revenue, status=status.HTTP_200_OK)
+        
+
+
+
 
 
 
@@ -141,7 +222,7 @@ class ExpensesView(APIView):
 # Creating and Retriving Expenses
 class PurchaseOrderView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     purchaseOrderSerializer = accounting_serializer.purchaseOrderSerializer
@@ -273,6 +354,38 @@ class PurchaseOrderView(APIView):
 
 
 
+
+
+
+
+
+
+
+
+        # # Gets the income for the month (30 days)
+        # today = date.today()
+        # monthData = []
+
+        # # Get the first day of the month
+        # first_day_of_month = date(today.year, today.month, 1)
+        # # Get last day fo the month
+        # if today.month == 12:
+        #     last_day_of_month = date(today.year, 12, 31)
+        # else:
+        #     last_day_of_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
+
+        # # loop trought all the days and sum up all of the sales for current days
+        # current_day = first_day_of_month
+
+        # while current_day <= last_day_of_month:
+        #     daily_data = Expense.objects.filter(location = locationID).filter(creationDate__date=current_day)
+        #     # print(current_day)
+        #     monthData.append({ 
+        #         "dia": current_day.strftime("%d/%m"),
+        #         "gastos" : daily_data.aggregate(total = Sum("totalAmount"))['total'] or 0
+        #     })
+
+        #     current_day += timedelta(days=1)
 
 
 

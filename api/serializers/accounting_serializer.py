@@ -9,7 +9,7 @@ from django.utils import timezone
 from ..models import PurchaseOrder, PurchaseOrderLines
 
 # New Models Here DELETE ABOVE WHEN REDOING SERIALIZER
-from ..models import SalesReceipt, Expense, ExpenseTypes
+from ..models import Order, Expense, ExpenseTypes
 
 
 
@@ -18,7 +18,7 @@ class IncomeSerialzier(serializers.ModelSerializer):
     total = serializers.DecimalField(read_only=True, decimal_places=2, max_digits=10)
 
     class Meta:
-        model = SalesReceipt
+        model = Order
         fields = ['totalAmount', 'dateCreated', 'total']
 
 

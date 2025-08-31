@@ -2,7 +2,7 @@
 from django.utils import timezone
 
 from  .accounting_serializer import ExpensesSerializer
-from ..models import CashPayment, TransferPayment, CreditCardPayment
+from ..models import CashPayment, BankTransferPayment, CreditCardPayment
 from rest_framework.exceptions import ValidationError
 
 
@@ -28,6 +28,9 @@ def addExpenses(instance):
 
 
 def updatingSalesReceipt(transType, instance, paymentMethodData, CashPaymentSerializer, TransferPaymentSerializer, CreditCardPaymentSerializer):
+        # TODO: cHECK Status
+        # TODO: 
+
         if transType == "cash":
             if instance.status == "PAID":
                 try:
@@ -94,7 +97,7 @@ def updatingSalesReceipt(transType, instance, paymentMethodData, CashPaymentSeri
                         paymentMethodData["transferPaymentMethod"]["amount"] = paymentMethodData["transferPaymentMethod"]["amount"]
                     except:
                        raise ValidationError("Algo salio mal en nuestro sistema: codigo 1903")
-            objectInstance = TransferPayment.objects.get(paymentMethod=instance.paymentMethod.id)
+            objectInstance = BankTransferPayment.objects.get(paymentMethod=instance.paymentMethod.id)
             paymentTypeSerializer = TransferPaymentSerializer(objectInstance, data=paymentMethodData.get("transferPaymentMethod"), partial=True)
 
         if paymentTypeSerializer.is_valid(raise_exception=True):

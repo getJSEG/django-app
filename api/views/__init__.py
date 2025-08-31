@@ -7,4 +7,5 @@ from .pos_system import *
 from .discount import *
 from .accounting import *
 from .Products import *
-from .shipping import *
+from .shipping import shipping
+from .customer import *

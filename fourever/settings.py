@@ -115,6 +115,20 @@ REST_AUTH = {
     'JWT_AUTH_RETURN_EXPIRATION': False
 }
 
+# os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # Adjust if Redis is on a different host/port
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Optional: Add connection pooling for better performance
+            # "CONNECTION_POOL_KWARTS": {"max_connections": 100, "retry_on_timeout": True},
+        }
+    }
+}
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -125,7 +139,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SECURE': False,  # Only send cookies over HTTPS
     'AUTH_COOKIE_HTTP_ONLY': True, # Prevent client-side JavaScript access
     'AUTH_COOKIE_SAMESITE': 'Lax',
-    'ROTATE_REFRESH_TOKENS': True,
+    # 'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     "AUTH_HEADER_TYPES": ("Bearer",)
     # "SIGNING_KEY": SECRET_KEY,
@@ -369,7 +383,9 @@ CORS_ALLOW_HEADERS = [
 load_dotenv()
 
 CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN")
 CLOUDFLARE_API_KEY = os.environ.get("CLOUDFLARE_API_KEY")
+
 CLOUDFLARE_ACCOUNT_HASH = os.environ.get("CLOUDFLARE_ACCOUNT_HASH")
 CLOUDFLARE_IMAGES_DOMAIN = os.environ.get("CLOUDFLARE_IMAGES_DOMAIN")
 CLOUDFLARE_EMAIL = os.environ.get("CLOUDFLARE_EMAIL")

@@ -177,11 +177,11 @@ class Varient(models.Model):
     size = models.CharField(max_length=10)
     units = models.PositiveIntegerField()
     minUnits = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
+    isActive = models.BooleanField(default=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     categories = models.ManyToManyField(Categories, related_name="variantCategory", null=True, blank=True)
+    tags = models.ManyToManyField(Tags, related_name="variantTags", blank=True, null=True)
     vendorSku = models.CharField(max_length=100, null=True, blank=True)
-    tags = models.ManyToManyField(Tags, related_name="variantTags", blank=True)
     varientImage = models.ForeignKey(Images, null=True, related_name="varientImage", blank=True, on_delete=models.CASCADE)
     storageLocation = models.CharField(max_length=100, null=True, blank=True)
     sku = models.CharField(max_length=100, unique=True)
@@ -244,15 +244,16 @@ class Discount(models.Model):
 
 # TODO: CHANGE Phone = > charfield to Phone number field
 class Customer(models.Model):
-    firstName = models.CharField(max_length=255)
-    lastName = models.CharField(max_length=255)
+    firstName = models.CharField(max_length=255, null=True, blank=True)
+    lastName = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(max_length=255, null=True, blank=True)
     countryCode = models.CharField(max_length=5, null=True, blank=True)
-    phone = models.CharField(max_length=255, null=True, blank=True)
+    phoneNumber = models.CharField(max_length=255)
     city = models.CharField(max_length=50, null=True, blank=True)
     state = models.CharField(max_length=30, null=True, blank=True)
     zip_code = models.CharField(max_length=10, null=True, blank=True)
 
+    blacklist = models.BooleanField(default=False)
     address = models.CharField(max_length=100, null=True, blank=True)
     extraDetails = models.CharField(max_length=255, null=True, blank=True)
     department = models.CharField(max_length=255, null=True, blank=True)
@@ -260,7 +261,7 @@ class Customer(models.Model):
     country = models.CharField(max_length=25, null=True, blank=True, default="El Salvador")
     dateCreated = models.DateTimeField(auto_now_add=True)
 
-class PaymentMethod(models.Model):
+class Payment(models.Model):
     PAYMENT_TYPE_CHOICES = [
         ("cash", "Efectico"),
         ('credit_card', 'Tarjeta de Credito'),
@@ -268,35 +269,41 @@ class PaymentMethod(models.Model):
         ('bank_transfer', 'Transferencia'),
     ]
     transactionType = models.CharField(max_length=255, choices=PAYMENT_TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    order = models.ForeignKey('Order', on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
 
 # Payment Types
-class CashPayment(models.Model):
-    paymentMethod = models.OneToOneField(PaymentMethod, related_name='cashPaymentMethod', on_delete=models.CASCADE, primary_key=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+class CashPayment(Payment):
     changeDue = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    # order = models.ForeignKey('Order', related_name='cashPayment', on_delete=models.CASCADE)
 
-class TransferPayment(models.Model):
-    paymentMethod = models.OneToOneField(PaymentMethod, related_name='transferPaymentMethod',  on_delete=models.CASCADE, primary_key=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    transactionID = models.CharField(max_length=255)
 
-class CreditCardPayment(models.Model):
-    paymentMethod = models.OneToOneField(PaymentMethod, related_name='creditcardPaymentMethod', on_delete=models.CASCADE, primary_key=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    lastDigits = models.CharField(max_length=255)
-    transactionID = models.CharField(max_length=255)
+class BankTransferPayment(Payment):
+    transactionID = models.CharField(max_length=255, null=True, blank=True)
+    # order = models.ForeignKey('Order', related_name='btPayment', on_delete=models.CASCADE)
+
+class CreditCardPayment(Payment):
+    lastDigits = models.CharField(max_length=255, null=True, blank=True)
+    transactionID = models.CharField(max_length=255, null=True, blank=True)
+    # order = models.ForeignKey('Order', related_name='ccPayment', on_delete=models.CASCADE)
+
 
 # This is the Parent this is Sales Receipt/Invoice
-class SalesReceipt(models.Model):
+# this is the order Moght change from salesReceipt to order
+class Order(models.Model):
     OPEN = "Avierto"
 
-    Sales_Choices = [
-        ('OPEN', 'Avierto'),
+# todo: change from tupletes to regular array on all of the options
+    Sales_Choices = [  
+        ("OPEN", "Avierto"),
         ("CLOSED", "Cerrado"),
         ("PAID", "Pagado"),
         ("PROCESSING", "procesando"),
         ("CANCELED", "Cancelado"),
-        ("RETURN", "RETURNED")
+        ("RETURN", "Retorno")
     ]
     paymentExecution_Choices = [
         ('POS', 'POS'),
@@ -304,7 +311,6 @@ class SalesReceipt(models.Model):
     ]
     status = models.CharField(max_length=25, choices=Sales_Choices, default=OPEN, null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
-    paymentMethod = models.ForeignKey(PaymentMethod, related_name="paymentMethods",on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     discount = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, null=True, blank=True)
@@ -314,8 +320,9 @@ class SalesReceipt(models.Model):
     dateCreated = models.DateTimeField(auto_now_add=True)
 
 
+
 class ReceiptLine(models.Model):
-    salesReceipt = models.ForeignKey(SalesReceipt, related_name='receiptLines', on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, related_name='OrderLine', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     color = models.CharField(max_length=255)
     size = models.CharField(max_length=255)
@@ -335,7 +342,7 @@ class Shipping(models.Model):
         ('parcel', 'Encomienda')
     ]
 
-    shippingReceipts = models.ForeignKey(SalesReceipt, on_delete=models.CASCADE)
+    shippingOrder = models.ForeignKey(Order, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True)
 
@@ -345,33 +352,46 @@ class Shipping(models.Model):
     details = models.CharField(max_length=255, null=True, blank=True)
     weight = models.DecimalField(max_digits=10, decimal_places=2, default=1.00)
 
+    firstName = models.CharField(max_length=255, null=True, blank=True)
+    lastName = models.CharField(max_length=255, null=True, blank=True)
+    countryCode = models.CharField(max_length=5, null=True, blank=True)
+    phoneNumber = models.CharField(max_length=255, null=True, blank=True)
+
+    city = models.CharField(max_length=50, null=True, blank=True)
+    state = models.CharField(max_length=30, null=True, blank=True)
+    streetAddress = models.CharField(max_length=100, null=True, blank=True)
+    addressLineTwo = models.CharField(max_length=255, null=True, blank=True)
+    department = models.CharField(max_length=255, null=True, blank=True)
+    municipality = models.CharField(max_length=255, null=True, blank=True)
+    postalCode = models.CharField(max_length=10, null=True, blank=True)
+    country = models.CharField(max_length=25, null=True, blank=True)
+
+    dateCreated = models.DateTimeField(auto_now_add=True)
     class Meta:
         abstract = True
 
 class CustomShipping(Shipping):
-    PROCESSING = 'procesando'
+    PROCESSING = 'PROCESSING'
 
     Sales_Choices = [
-        ('PREPAIDED', 'Pagado'),
         ("PROCESSING", "Procesando"),
         ("SHIPPED", "Enviado"),
         ("DELIVERED", "Entregado"),
-        ("RETURN", "DEVOLUCION"),
+        ("RETURN", "Devolucion"),
         ("CANCELED", "Cancelado")
     ]
     status = models.CharField(max_length=25, choices=Sales_Choices, default=PROCESSING)
 
     
 class ParselShipping(Shipping):
-    PROCESSING = 'procesando'
+    PROCESSING = 'PROCESSING'
 
     Sales_Choices = [
-        ('PREPAIDED', 'Pagado'),
         ("PROCESSING", "Procesando"),
         ("SHIPPED", "Enviado"),
         ("PICKEDUP", "Recojido"),
         ("NOSHOW", "No Retiro"),
-        ("RETURN", "DEVOLUCION"),
+        ("RETURN", "Devolucion"),
         ("CANCELED", "Cancelado"),
     ]
     status = models.CharField(max_length=25, choices=Sales_Choices, default=PROCESSING, null=True, blank=True)
@@ -411,11 +431,10 @@ class ExpenseTypes(models.Model):
 class PurchaseOrder(models.Model):
     PROCESSING = "Procesando"
     purchaseOrder_Choices = [
-        ('ONHOLD', 'En Espera'),
         ("PROCESSING", "Procesando"),
         ("PAID", "Pagado"),
-        ("SHIPPED", "Enviado"),
-        ("DELIVERED", "Entregado"),
+        ("CLOSED", "Cerrado"),
+        ("RETURN", "Devolucion"),
         ("CANCELED", "Cancelado")
     ]
 

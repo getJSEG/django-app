@@ -8,106 +8,148 @@ from ...models import CustomUser
 
 # all name have to be lowercase
 # permission need to be lowercase
+
 GROUPS = {
-    "Regional Manager": {
+    "Owner": {
         #general permissions
-        "location" : ["add","change","view"],
-        "expense" : ["add","delete","change","view"],
-        "expense types" : ["add","delete","change","view"],
-        "supplier" : ["add","delete","change","view"],
-        "stock tranfer" : ["add","delete","change","view"], #TODO: FIX THE MISSSPELLING (tranfer to Transfer)
-        "purchase order" : ["add","delete","change","view"],
-        "purchase order lines" : ["add","delete","change","view"],
-        "sales order" : ["add","delete","change","view"],
-        "sales order line" : ["add","delete","change","view"],
-        "custom user" : ["add","delete","change","view"],
-        "discount": ["add","delete","change","view"],
-        
-        "product" : ["add","delete","change","view"],
-        "varient" : ["add","delete","change","view"],
-        "product images" : ["add","delete","change","view"], 
-        "image album" : ["add","delete","change","view"], 
+        "location" : ["add", "change", "view"],
+        "discount": ["add", "change", "view", "delete"],
+        "avatar": ["add", "change", "view", "delete"],
+        "custom user": ["add", "change", "view", "delete"],
+
+        #Products
+        "product" : ["add", "change","view", "delete"],
+        "varient" : ["add", "change","view", "delete"],
+        "images" : ["add", "change","view", "delete"], 
+        "tags": ["add", "change", "view", "delete"],
+        "categories": ["add", "change", "view", "delete"],
+        "stock transfer" : ["add", "change","view", "delete"],
+
+        # orders and payments
+        "order" : ["add", "change","view", "delete"],
+        "receipt line" : ["add", "change","view", "delete"],
+        "cash payment" : ["add", "change","view"],
+        "bank transfer payment" : ["add", "change","view"],
+        "credit card payment" : ["add", "change","view"],
+
+        # shipping and customers
+        "custom shipping" : ["add", "delete", "change", "view"],
+        "parsel shipping" : ["add", "delete", "change", "view"],
+        "customer" : ["add", "delete", "change","view"],
+
+        # accounting, purchases and expenses
+        "expense" : ["add", "delete", "change","view"],
+        "expense types" : ["add", "delete", "change","view"],
+        "purchase order" : ["add", "delete", "change","view"],
+        "purchase order lines" : ["add", "delete", "change","view"],      
     },
 
     "Manager": {
+        #general permissions
         "location" : ["view"],
-        "custom user" : ["add","delete","change","view"],
         "discount": ["view"],
-        "tags": ["add", "view", "change"],
-        "categories": ["add", "view", "change"],     
-        "expense" : ["add", "view", "change"],
-        "expense types" : ["add", "view", "change"],
-        "purchase order" : ["add", "view", "change"],
-        "purchase order lines" : ["add", "view", "change"],
-        "return lines" : ["add", "view", "change"],
-        "return orders" : ["add", "view", "change"],
-        "sales order" : ["add", "view", "change"],
-        "sales order line" : ["add", "view", "change"],
-        "payment voucher" : ["add", "view", "change"],
-        "transaction receipt" : ["view"],
+        "avatar": ["add", "change", "view", "delete"],
 
-        "product" : ["add","delete","change","view"],
-        "varient" : ["add", "view", "change", "delete"],
-        "product images" : ["add", "view", "change", "delete"],
-        "image album" : ["add", "view", "change", "delete"],
-        "varient color" : ["add", "view", "change", "delete"],
+        #Products
+        "product" : ["add", "change","view", "delete"],
+        "varient" : ["add", "change","view", "delete"],
+        "images" : ["add", "change","view", "delete"], 
+        "tags": ["add", "change", "view", "delete"],
+        "categories": ["add", "change", "view", "delete"],
+        "stock transfer" : ["add", "change","view", "delete"],
 
+        # orders and payments
+        "order" : ["add", "change","view", "delete"],
+        "receipt line" : ["add", "change","view", "delete"],
+        "cash payment" : ["add", "change","view"],
+        "bank transfer payment" : ["add", "change","view"],
+        "credit card payment" : ["add", "change","view"],
+
+        # shipping and customers
+        "custom shipping" : ["add", "delete", "change","view"],
+        "parsel shipping" : ["add", "delete", "change","view"],
+        "customer" : ["add", "delete", "change","view"],
+
+        # accounting, purchases and expenses
+        "expense" : ["add", "change","view"],
+        "expense types" : ["add", "change","view"],
+        "purchase order" : ["add", "change","view"],
+        "purchase order lines" : ["add", "change","view"],  
     },
 
     "Employee": {
-        #django app model specific permissions
-        "return lines" : ["add", "view"],
-        "return orders" : ["add", "view"],
-        "sales order" : ["add", "view"],
-        "sales order line" : ["add", "view"],
+        #general permissions
+        "location" : ["view"],
         "discount": ["view"],
-        "tags": ["add", "view"],
-        "categories": ["add", "view"],
-        "product" : ["view"],
-        "varient" : ["view"],
-        "product images" : ["view"],
-        "image album" : ["view"],
-        "varient color" : ["view"],
+        "avatar": ["add", "change", "view", "delete"],
+
+        #Products
+        "product" : ["add", "change","view", "delete"],
+        "varient" : ["add", "change","view", "delete"],
+        "images" : ["add", "change","view", "delete"], 
+        "tags": ["add", "change", "view", "delete"],
+        "categories": ["add", "change", "view", "delete"],
+        "stock transfer" : ["add", "change","view", "delete"],
+
+        # orders and payments
+        "order" : ["add", "change", "view"],
+        "receipt line" : ["add", "change", "view", "delete"],
+        "cash payment" : ["add","view"],
+        "bank transfer payment" : ["add", "view"],
+        "credit card payment" : ["add", "view"],
+
+        # shipping and customers
+        "custom shipping" : ["add", "change","view"],
+        "parsel shipping" : ["add", "change","view"],
+        "customer" : ["add", "delete", "change","view"], 
     },
 
     "Accounting": {
-        #django app model specific permissions
+        #general permissions
+        "location" : ["view"],
+        "avatar": ["view"],
+
+        #Products
+        "stock transfer" : ["view"],
+
+        # orders and payments
+        "order" : ["view"],
+        "receipt line" : ["view"],
+        "cash payment" : ["view"],
+        "bank transfer payment" : ["view"],
+        "credit card payment" : ["view"],
+
+        # accounting, purchases and expenses
         "expense" : ["view"],
-        "expense types" : [ "view"],
+        "expense types" : ["view"],
         "purchase order" : ["view"],
-        "purchase order lines" : ["view"],
-        "return lines" : ["view"],
-        "return orders" : ["view"],
-        "sales order" : ["view"],
-        "sales order line" : ["view"],
-        "payment voucher" : ["view"],
-        "discount": ["view"],
+        "purchase order lines" : ["view"],  
     },
     "Contractor": {
         #django app model specific permissions
         "product" : ["view"],
         "varient" : ["view"],
-        "product images" : ["view"],
-        "image album" : ["view"],
-        "varient color" : ["view"],
+        "images" : ["view"], 
+        "tags": ["view"],
+        "categories": ["view"],
         "discount": ["view"],
     },
     "Customer": {
-        #django app model specific permissions
+        #Products
         "product" : ["view"],
         "varient" : ["view"],
-        "product images" : ["view"],
-        "image album" : ["view"],
-        "varient color" : ["view"],
+        "images" : ["view"], 
+        "tags": ["view"],
+        "categories": ["view"],
         "discount": ["view"],
     },
 }
 
 
 USERS = {
-    "jenn" : ["Manager","manager@gmail.com","1234"],
-    "john" :  ["Administration","admin@domain.ca","1234"],
-    "admin" : ["Administration","elmer@gmail.com","1234"],
+    "jenn" : ["Employee","manager@gmail.com","1234"],
+    "john" :  ["Manager","admin@domain.ca","1234"],
+    "admin" : ["Owner","elmer@gmail.com","1234"],
 }
 
 

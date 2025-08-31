@@ -8,6 +8,7 @@ import pytz
 # Permission and Authetication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from ..authenticate import CustomAuthentication
 
 from ..serializers import discount_serializer
 
@@ -17,7 +18,7 @@ from ..repeated_responses.repeated_responses import not_assiged_location, emptyF
 
 class GetDiscountView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -32,7 +33,7 @@ class GetDiscountView(APIView):
         if discount_code and discount_code != '':
             queryset = Discount.objects.filter(discount_code__contains=discount_code)
 
-        print(queryset)
+        # print(queryset)
 
         if not queryset.exists():
            return does_not_exists()
@@ -48,7 +49,7 @@ class GetDiscountView(APIView):
 #TODO: Use Atomic WHE CREATING THIS 
 class CreateDiscountView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
@@ -79,7 +80,7 @@ class CreateDiscountView(APIView):
 
 class DeleteDiscount(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk, format=None):

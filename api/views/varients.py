@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from ..authenticate import CustomAuthentication
 from django.db import transaction
 from django.db import transaction
 from django.db.models import Q
@@ -25,16 +26,19 @@ from django.conf import settings
 from ..repeated_responses.repeated_responses import not_assiged_location, denied_permission, does_not_exists, invalid_uuid, emptyField, varient_already_exists
 from ..helper_classes.varients import required_info_Validation, cleanString, info_require_for_update
 
+# this is the serializer for the variant
+from ..serializers.variant.variant_serializer import variantSerializer
+
 # This Create Varient
 # TODO: If theirs not varientImage dont send to get a presign url
 # TODO: Product info get removed when updating
 class VarientView(APIView):
 
     # Require Authentication
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    varientSerializer = product_serializer.VariantOnlySerializer
+    varientSerializer = variantSerializer
 
     def post(self, request, format=None):
 
@@ -43,44 +47,34 @@ class VarientView(APIView):
             return denied_permission()
 
         data = request.data.copy()
-        product_id = data["product"]
-        try:
-            uuid_obj = uuid.UUID(product_id, version=4) #Value Error
-        except:
-            return invalid_uuid()
         
-        product = Product.objects.filter(Q(id=product_id))
+        # if image exits the make image urls
+        isImage = data.get("varientImage", None)
+        # A list of presigned url to sen to the front end
+        presignedUrlList = []
+        if isImage:
+            if 'varientImage' in data:
+                isFilename = isImage.get("filename", None)
+                if isFilename:
+                    # this generates a url
+                    presignedUrl = generate_presign_url()
+                    if presignedUrl is None:
+                        return Response({"error": "Algo salio mal suviendo la Fotos"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not product.exists():
-            return does_not_exists()
+                    # Sending request to get presined URL
+                    presignedUrlList.append(presignedUrl["uploadURL"])
+                    
+                    url = settings.CLOUDFLARE_IMAGES_DOMAIN
+                    account_hash = settings.CLOUDFLARE_ACCOUNT_HASH
 
-        # Validation required Infor
-        is_info_valid, info_err_message = required_info_Validation(data)
-        if not is_info_valid:
-            return Response({"data": { "message": info_err_message}}, status=status.HTTP_400_BAD_REQUEST)
-
-        sku = generate_sku(product[0].name, product[0].brand, data['size'], data['color'], product[0].id)
-        data["sku"] = sku
-        varientFound = Varient.objects.filter(Q(sku__icontains=sku))
-
-        if varientFound.exists():
-            return varient_already_exists()
-        
-        if 'varientImage' in data:
-            # A list of presigned url to sen to the front end
-            presignedUrlList = []
-            # Sending request to get presined URL
-            presignedUrl = generate_presign_url()
-            presignedUrlList.append(presignedUrl["uploadURL"])
-
-            url = settings.CLOUDFLARE_IMAGES_DOMAIN
-            account_hash = settings.CLOUDFLARE_ACCOUNT_HASH
-
-            signedURLID  = presignedUrl.get("id", None)
-            data["varientImage"].update({
-                "cf_id": presignedUrl["id"],
-                "link":f"https://{url}/{account_hash}/{signedURLID}/public"
-            })
+                    signedURLID  = presignedUrl.get("id", None)
+                    data["varientImage"].update({
+                        "cf_id": presignedUrl["id"],
+                        "link":f"{url}/{account_hash}/{signedURLID}/public"
+                    })
+        else:
+            # delete the variant image if theirs no file name for when creating theirs no errors
+            data.pop("varientImage", None)
 
         serializer = self.varientSerializer(data=data)
 
@@ -94,14 +88,14 @@ class VarientView(APIView):
 
 
 
-# TODO: Make Sure the SKU is regenerated if the item color and size is change else dont change
+
 #updating view
 class UpdateVarientView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    varientSerializer = product_serializer.VariantOnlySerializer
+    varientSerializer = variantSerializer
 
     def patch(self, request, *args, **kwargs):
         user = request.user
@@ -111,24 +105,19 @@ class UpdateVarientView(APIView):
         
         variantId = request.GET.get('variant').strip()
         data = request.data.copy()
-        
-        if_info_valid, update_infor_err_msg = info_require_for_update(variantId, data)
-        if not if_info_valid:
-            return Response({"data": { "message": update_infor_err_msg}}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # This Removes the Variant Image we are not updating image in this view
         if "varientImage" in data:
             data.pop('varientImage')
-
-        try:
-            product_uuid = uuid.UUID(variantId, version=4)
+                    
+        try: 
+            varias_uiid = uuid.UUID(variantId, version=4) #checking the id validation
+            variant_instance = Varient.objects.get(Q(id=variantId)) #getting the instance
         except:
-            return invalid_uuid()
-        
-        try: variant_instance = Varient.objects.get(Q(id=variantId))
-        except: return does_not_exists()
+            return does_not_exists()
 
         serializer = self.varientSerializer(instance=variant_instance, data=data, partial=True)
+
         try:
             with transaction.atomic():
                 if  serializer.is_valid(raise_exception=True):
@@ -136,15 +125,15 @@ class UpdateVarientView(APIView):
                 else:
                     raise Exception(serializer.errors)
         except (Exception, ValueError) as e:
-            return Response({"data": {"message": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"details": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'data': { "message" : "Actualizado Exitosamente"} }, status=status.HTTP_200_OK)
+        return Response({ "details" : "Actualizado Exitosamente", "data":serializer.data } , status=status.HTTP_200_OK)
 
 
 #This View Delete Varients
 class DeleteVarientView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk ,*args, **kwargs):

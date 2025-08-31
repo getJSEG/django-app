@@ -24,18 +24,18 @@ class ImageSerialzier(serializers.ModelSerializer):
     
     class Meta:
         model= Images
-        fields = '__all__'
+        fields = ["filename", "cf_id", "link"]
 
-# TODO: This field "varientImage" should not trow error 
-# TODO: get the Id of  the created Product
+# ['id', 'color', 'size', 'units', 'minUnits', 'sku', 'price', 'tags', 'categories', 'varientImage']
 class VariantSerializer(WritableNestedModelSerializer):
     varientImage = ImageSerialzier(required=False)
+    # varientImage = serializers.PrimaryKeyRelatedField(read_only=True)
     sku = serializers.CharField(read_only=True)
-    id = serializers.CharField(required=False)
+    product = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model= Varient
-        fields = ['id', 'color', 'size', 'units', 'minUnits', 'sku', 'price', 'tags', 'categories', 'varientImage']
+        fields = '__all__'
         optional_fields = ['varientImage' ]
         extra_kwargs = {
             "id": { "required" : False },
@@ -45,7 +45,23 @@ class VariantSerializer(WritableNestedModelSerializer):
             # 'sku': {'error_messages': {'unique': 'Ya Existe un variente con la misma informacion'} }
         }
 
-    
+    # def create(self, validated_data):
+    #     # GetCategories 
+    #     catergories = validated_data.pop("categories", None)
+    #     # Get Tags
+    #     # Create thje image
+    #     print("This is in the variante serialzer: ",validated_data)
+
+    #     variant = Varient.objects.create(**validated_data)
+
+    #     if catergories:
+    #         for category in catergories:
+    #             vaari = Varient.objects.get(id=variant.id)
+    #             vaari.categories.add(category)
+    #             variant.save()
+
+    #     return variant
+
 class productSerializer(WritableNestedModelSerializer):
     variants = VariantSerializer(many=True)
     total_varients = serializers.IntegerField(read_only=True)
@@ -72,7 +88,7 @@ class productSerializer(WritableNestedModelSerializer):
     
     # # This updates the name  and all of the Sku items relates to this product
     def update(self, instance, validated_data):
-        variants_data =  validated_data.pop('variants')
+        variants_data =  validated_data.pop('variants', )
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -104,39 +120,33 @@ class productSerializer(WritableNestedModelSerializer):
 
     # Creates variantes
     def create(self, validated_data):
-        variants = validated_data.pop("variants")
-        product_ = Product.objects.create(**validated_data)
+        variants = validated_data.pop("variants", None)
+        # Creating the product
+        product = Product.objects.create(**validated_data)
 
-        for variant in variants:
-            sku_code = generate_sku(product_.name, product_.brand, variant['size'], variant['color'], product_.id)
+        # if theirs variant create the product
+        if variants:
+            for item in variants:
+                categories = item.pop("categories", None)
+                tags = item.pop("tags", None)
+                image = item.pop("varientImage", None)
 
-            if 'varientImage' in variant:
-                image = variant.pop("varientImage")
-                img = Images.objects.create(**image)
-                variant['varientImage'] = img
+                # creating image if theirs an image
+                if image:
+                    img = Images.objects.create(**image)
+                    print("image Instace", img)
+                    item.update({"varientImage": img})
+                
+                item.update({"sku": generate_sku(product.name, product.brand, item['size'], item['color'], product.id) }) 
+                varInstance = Varient.objects.create(product=product, **item)
 
-            Varient.objects.create(product = product_, sku=sku_code, **variant)
+                # Add categories to Many2Many Field
+                if categories:
+                    for category in categories:
+                        varInstance.categories.add(category)
+                # Add tags to Many2Many Field
+                if tags:
+                    for tag in tags:
+                        varInstance.tags.add(tag)
 
-        return product_
-
-
-# Varainte ment for creation only for variants NOT Joint
-class VariantOnlySerializer(serializers.ModelSerializer):
-    varientImage = ImageSerialzier(required=False)
-    sku = serializers.CharField(read_only=True)
-
-    class Meta:
-        model= Varient
-        fields = '__all__'
-
-
-    def create(self, validated_data):
-
-        if 'varientImage' in validated_data:
-            image = validated_data.pop("varientImage")
-            img = Images.objects.create(**image)
-            validated_data['varientImage'] = img
-
-        variant = Varient.objects.create(**validated_data)
-
-        return variant
+        return product

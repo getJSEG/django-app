@@ -9,6 +9,7 @@ from ..helper import store_number_generator
 # Authentication and permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from ..authenticate import CustomAuthentication
 
 #### MODELS ######
 from ..models import CustomUser, Location
@@ -20,7 +21,7 @@ from ..serializers import location_serializer
 # this returns all of the information from ALLL locations this will not be 
 class LocationView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -33,8 +34,8 @@ class LocationView(APIView):
         except:
             return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
-        print(user.location)
-        print(user)
+        # print(user.location)
+        # print(user)
         # if(not user.is_superuser or not user.is_staff):
         #     return Response({"message": "You dont have permission"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -55,7 +56,7 @@ class LocationView(APIView):
 # aslo wrsp this is a try except method
 class SearchLocation(CreateAPIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, forman=None):
@@ -75,7 +76,7 @@ class SearchLocation(CreateAPIView):
 # TODO: Use atomic with this 
 class CreateLocationView( CreateAPIView):
     
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     serializer_class = location_serializer.CreateLocationSerializer
@@ -118,7 +119,7 @@ class CreateLocationView( CreateAPIView):
 #updated 
 class UpdateLocationView( UpdateAPIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, format=None):
@@ -165,7 +166,7 @@ class UpdateLocationView( UpdateAPIView):
 #ONLY ADMIN CAN DELETE ANY LOCATION
 class DeleteLocationView( APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk, form=None):

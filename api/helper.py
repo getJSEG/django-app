@@ -6,6 +6,8 @@ import os
 import requests
 from django.db.models import Q
 from django.conf import settings
+from requests.exceptions import HTTPError, ConnectionError, Timeout, RequestException
+
 
 countryCode = {
     'belize': '501',
@@ -84,22 +86,48 @@ def  cal_balance(grand_total, amount_paid):
 
 
 #This Create pre signed url to upload imge in the front end
-def generate_presign_url( account_id = settings.CLOUDFLARE_ACCOUNT_ID , api_token=settings.CLOUDFLARE_API_KEY):
+def generate_presign_url( account_id = settings.CLOUDFLARE_ACCOUNT_ID , api_token=settings.CLOUDFLARE_API_TOKEN):
     url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/images/v2/direct_upload"
 
     headers = { 
         "Authorization": f"Bearer {api_token}"
     }
-    
+
     files = {
         "requireSignedURLs": False, # id this is true its secure else its public
     }
 
-    response = requests.post(url, headers=headers, files=files)
+    try:
+        response = requests.post(url, headers=headers, files=files)
+        response.raise_for_status()  # Raises HTTPError for bad status codes (4xx or 5xx)
+        return response.json()["result"]
+    except HTTPError as http_err:
+        if response.status_code == 404:
+            print("Resource not found.")
+            return None
+        elif response.status_code == 500:
+            print("Server error.")
+            return None
+    except ConnectionError as conn_err:
+        print(f"Connection error occurred: {conn_err}")
+        # Handle network connection issues
+        return None
+    except Timeout as timeout_err:
+        print(f"Timeout error occurred: {timeout_err}")
+        # Handle request timeouts
+        return None
+    except RequestException as req_err:
+        print(f"An unexpected error occurred: {req_err}")
+        # Handle any other request-related errors
+        return None
+    except ValueError as json_err:
+        print(f"JSON decoding error: {json_err}")
+        return None
+    
 
-    response.raise_for_status()
+    # response.raise_for_status()
 
-    return response.json()["result"]
+    # return response.json()["result"]
 
 
 

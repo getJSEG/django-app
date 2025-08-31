@@ -1,6 +1,7 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
-
+from django.core.cache import cache
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.authentication import CSRFCheck
 from rest_framework import exceptions
 
@@ -14,6 +15,24 @@ from rest_framework import exceptions
 #     response = self.get_response(request)
 #     # Your middleware logic after the view is called
 #     return response
+class RedisBlacklistMixin:
+    """
+        a mixion to handle acces_token blacklisting using redis 
+    """
+    def is_token_blacklisted(self, token):
+        """
+        this methos chack if token is blacklisted 
+        """
+        if cache.get(token):
+            return True
+        return False
+    
+    def blacklist_token(self, token):
+        """
+            This method blacklist a token.
+        """
+        cache.set(token, "blacklisted, timeout=60*60*24*2") # 2 days
+
 def enforce_csrf(request):
     """
     Enforce CSRF validation.
@@ -27,10 +46,19 @@ def enforce_csrf(request):
         # CSRF failed, bail with explicit error message
         raise exceptions.PermissionDenied('CSRF Failed: %s' % reason)
 
-class CustomAuthentication(JWTAuthentication):
+class CustomAuthentication(JWTAuthentication, RedisBlacklistMixin):
     
     def authenticate(self, request):
         header = self.get_header(request)
+        
+        try:
+            user = super().authenticate(request)
+            if user:
+                if self.is_token_blacklisted(user[1]):
+                    raise AuthenticationFailed("Token is blacklisted")
+                return user
+        except AuthenticationFailed as e:
+            raise e
         
         if header is None:
             raw_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE']) or None
@@ -41,4 +69,5 @@ class CustomAuthentication(JWTAuthentication):
 
         validated_token = self.get_validated_token(raw_token)
         enforce_csrf(request)
+        
         return self.get_user(validated_token), validated_token

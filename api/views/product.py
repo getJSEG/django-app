@@ -16,16 +16,19 @@ from rest_framework.pagination import PageNumberPagination
 # Serializers
 from ..serializers import product_serializer
 # classes
-from ..helper import generate_sku, generate_presign_url
+from ..helper import generate_presign_url
 from ..repeated_responses.repeated_responses import not_assiged_location, emptyField, denied_permission, product_already_exist, does_not_exists, invalid_uuid
 # This Creates a Product
+from ..authenticate import CustomAuthentication
 
 class ProductView(APIView):
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     productSerializer = product_serializer.productSerializer
+
     def post(self, request, format=None):
+
         user = request.user
         userLocation = request.user.location.id
         # Check Permission
@@ -60,25 +63,37 @@ class ProductView(APIView):
         # loop and waint for each link
         for item in variants:
             # Update each varaible with the link
-            presignedUrl = generate_presign_url()
-            presignedUrlList.append(presignedUrl["uploadURL"])
-            
-            url = settings.CLOUDFLARE_IMAGES_DOMAIN
-            account_hash = settings.CLOUDFLARE_ACCOUNT_HASH
+            # TODO: check if the theirs a file name  before creating the links
+            isImage = item.get("varientImage", None)
+            if isImage:
+                isFilename = isImage.get("filename", None)
+                if isFilename:
+                    presignedUrl = generate_presign_url()
 
-            signedURLID  = presignedUrl.get("id", None)
-            item["varientImage"].update({
-                "cf_id": presignedUrl["id"],
-                "link":f"https://{url}/{account_hash}/{signedURLID}/public"
-            })
+                    if presignedUrl is None:
+                        return Response({"error": "Algo salio mal suviendo las Fotos"}, status=status.HTTP_400_BAD_REQUEST)
 
+                    presignedUrlList.append(presignedUrl["uploadURL"])
+                    
+                    url = settings.CLOUDFLARE_IMAGES_DOMAIN
+                    account_hash = settings.CLOUDFLARE_ACCOUNT_HASH
+
+                    signedURLID  = presignedUrl.get("id", None)
+                    item["varientImage"].update({
+                        "cf_id": presignedUrl["id"],
+                        "link":f"{url}/{account_hash}/{signedURLID}/public"
+                    })
+            else:
+                # delete the variant image if theirs no file name for when creating theirs no errors
+                item.pop("varientImage", None)
+                
         with transaction.atomic():
             serializer = self.productSerializer(data=data)
 
             if serializer.is_valid():
                 serializer.save()
             else:
-                return Response({"data": {"message":  serializer.errors}}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         return Response({ "data": { "message":  "Producto Creado Exitosamente",
                                     "productId": serializer.data['id'], 
@@ -114,7 +129,7 @@ class ProductView(APIView):
 #TODO: Pass the some of the logic to the search view
 class RetriveProducts(APIView, PageNumberPagination):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     queryset = Product.objects.all().order_by('createdDate')
@@ -130,7 +145,7 @@ class RetriveProducts(APIView, PageNumberPagination):
         if not user.location:
             return not_assiged_location()
         # Filter Product
-        product = Product.objects.filter(location_id = user.location, variants__is_active=True).prefetch_related("variants")
+        product = Product.objects.filter(location_id = user.location).prefetch_related("variants")
         # This Aggregates the total units and total invetments
         totalUnits = product.aggregate(total_units=Sum('variants__units'))['total_units']
         totalInvesment = product.aggregate(total=Sum(F('cost') * F('variants__units')))['total']
@@ -154,7 +169,7 @@ class RetriveProducts(APIView, PageNumberPagination):
 # TODO: This will be fitlering if it includes active and incative products
 class SearchProducts(APIView, PageNumberPagination):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     queryset = Product.objects.all().order_by('createdDate')
@@ -228,7 +243,7 @@ class UpdateProductView(APIView):
 #DELETING PRODUCTS
 class DeleteProductView(APIView):
 
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def delete(self, request, pk, *args, **kwargs):
@@ -260,8 +275,9 @@ class DeleteProductView(APIView):
                 if(varient.varientImage):
                     if(varient.varientImage.cf_id):
                         url = f"https://api.cloudflare.com/client/v4/accounts/{settings.CLOUDFLARE_ACCOUNT_ID}/images/v1/{varient.varientImage.cf_id}"
-                        headers = {"Authorization": f"Bearer {settings.CLOUDFLARE_API_KEY}"}
+                        headers = {"Authorization": f"Bearer {settings.CLOUDFLARE_API_TOKEN}"}
                         response = requests.delete(url, headers=headers)
+
                         # Cheking reponse of cloud flare to see if its was succesful
                         if response.status_code >= 200 and response.status_code <= 299:
                             response.raise_for_status()
@@ -285,7 +301,7 @@ class DeleteProductView(APIView):
 
 # Return all products that are under a certain stock level
 class LowStockLevel(ListAPIView):
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     queryset = Product.objects.all().order_by('createdDate')
@@ -302,8 +318,9 @@ class LowStockLevel(ListAPIView):
         if not user.location:
             return not_assiged_location()
         
+        # ~Q(units__lte = 0) & Q(isActive=True))
         try:            
-            queryset = self.queryset.filter(variants__units__lte = F('variants__minUnits') , location_id= user.location.id)
+            queryset = self.queryset.filter(variants__units__lte = F('variants__minUnits') , location_id= user.location.id, variants__isActive=True)
             serializer = self.productSerializer(queryset, many=True)
 
         except Exception as e:
