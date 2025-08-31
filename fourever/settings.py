@@ -9,8 +9,6 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
-from pathlib import Path
 from datetime import timedelta
 from rest_framework.settings import api_settings
 from django.core.management.utils import get_random_secret_key
@@ -20,6 +18,7 @@ import mimetypes
 import sys #INSTALL THIS Library
 import pyrebase
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # from decouple import config
@@ -35,6 +34,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
 # EMAIL_PORT = EMAIL_PORT
 
+os.environ.setdefault("PGDATABASE", "fourever")
+os.environ.setdefault("PGUSER", "username")
+os.environ.setdefault("PGPASSWORD", "")
+os.environ.setdefault("PGHOST", "localhost")
+os.environ.setdefault("PGPORT", "5432")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -52,7 +56,8 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
 #This will be UNCOMENTED for Production
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
+# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = ["localhost", "192.168.8.160"]
 
 # Application definition
@@ -119,7 +124,7 @@ REST_AUTH = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",  # Adjust if Redis is on a different host/port
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),  # Adjust if Redis is on a different host/port
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             # Optional: Add connection pooling for better performance
@@ -231,31 +236,36 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 # }
 
 
-# DATABASES = {
-#         "default": {
-#             "ENGINE": "django.db.backends.sqlite3",
-#             "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+
+DATABASES = {
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': os.environ["PGDATABASE"],
+    'USER': os.environ["PGUSER"],
+    'PASSWORD': os.environ["PGPASSWORD"],
+    'HOST': os.environ["PGHOST"],
+    'PORT': os.environ["PGPORT"],
+    }
+}
+
+# if DEVELOPMENT_MODE is True:
+#     DATABASES = {
+#         'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'my_db',
+#         'USER' : 'elmergonzalez',
+#         'PASSWORD' : 'my_db@123',
+#         'HOST' : '127.0.0.1',
+#         'PORT' : '5432',
 #         }
 #     }
-
-if DEVELOPMENT_MODE is True:
-    DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'my_db',
-        'USER' : 'elmergonzalez',
-        'PASSWORD' : 'my_db@123',
-        'HOST' : '127.0.0.1',
-        'PORT' : '5432',
-        }
-    }
         
-elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-    if os.getenv("DATABASE_URL", None) is None:
-        raise Exception("DATABASE_URL environment variable not defined")
-    DATABASES = {
-        "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
-}
+# elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
+#     if os.getenv("DATABASE_URL", None) is None:
+#         raise Exception("DATABASE_URL environment variable not defined")
+#     DATABASES = {
+#         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+# }
 
 
 # Password validation
