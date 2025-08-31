@@ -2,6 +2,7 @@ db.sqlite3
 *.pyc
 IMS
 .venv
+./venv
 .env
 media/
 venv
