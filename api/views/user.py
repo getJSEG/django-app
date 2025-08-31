@@ -302,8 +302,6 @@ class getUserRoles (APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-        # user_id = token['user_id']
-        # request.user.groups.all()
         roles = []
         try:
             user = CustomUser.objects.get(id = request.user.id)
