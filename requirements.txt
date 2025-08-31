@@ -49,6 +49,9 @@ packaging==23.2
 phonenumbers==8.13.29
 pillow==10.2.0
 protobuf==4.25.3
+psycopg==3.2.9
+psycopg-binary==3.2.9
+psycopg-pool==3.2.6
 psycopg2-binary==2.9.9
 pyasn1==0.6.0
 pyasn1_modules==0.4.0
