@@ -31,7 +31,7 @@ class GetDiscountView(APIView):
         print(discount_code)
 
         if discount_code and discount_code != '':
-            queryset = Discount.objects.filter(discount_code__contains=discount_code)
+            queryset = Discount.objects.filter(code__contains=discount_code)
 
         # print(queryset)
 
