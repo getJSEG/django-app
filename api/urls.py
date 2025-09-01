@@ -1,9 +1,6 @@
-import dj_rest_auth.jwt_auth
-from django.urls import path, re_path
-from django.urls import path, include
-from django.conf import settings
+from django.urls import path
+from django.urls import path
 import dj_rest_auth.views as drfa
-import dj_rest_auth
 # import rest_framework_simplejwt.views as JWTTokenViewz
 # from rest_framework_simplejwt.views import TokenVerifyView
 # from rest_framework_simplejwt.views import TokenRefreshView

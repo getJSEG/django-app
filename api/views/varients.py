@@ -11,20 +11,16 @@ from django.db.models import Q
 import uuid
 import requests
 
-#this is the new session Authentication
-from rest_framework import permissions
-from urllib.parse import urlencode
+#this is the new session Authenticatio
 
 ##### SERIALIZERZ #####
-from ..serializers import product_serializer
-from ..models import Varient, Product
+from ..models import Varient
 
-from ..helper import generate_sku, generate_presign_url
+from ..helper import generate_presign_url
 from django.conf import settings
 
 # Functions
 from ..repeated_responses.repeated_responses import not_assiged_location, denied_permission, does_not_exists, invalid_uuid, emptyField, varient_already_exists
-from ..helper_classes.varients import required_info_Validation, cleanString, info_require_for_update
 
 # this is the serializer for the variant
 from ..serializers.variant.variant_serializer import variantSerializer
