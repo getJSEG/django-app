@@ -38,7 +38,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'django-insecure-o5cp0zfxp%ke0u0bwjg=y99xng$)!#qqtlo00l*s4!ee4fu@0g'
 
-DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
+DEVELOPMENT_MODE =True
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 # DEBUG = True
@@ -229,44 +229,36 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 #     }
 # }
 
+# os.environ.setdefault("PGDATABASE", "my_db")
+# os.environ.setdefault("PGUSER", "elmergonzalez")
+# os.environ.setdefault("PGPASSWORD", "my_db@123")
+# os.environ.setdefault("PGHOST", "127.0.0.1")
+# os.environ.setdefault("PGPORT", "5432")
 
-
-DATABASES = {
-    'default': {
-    'ENGINE': 'django.db.backends.postgresql',
-    'NAME': os.environ["PGDATABASE"],
-    'USER': os.environ["PGUSER"],
-    'PASSWORD': os.environ["PGPASSWORD"],
-    'HOST': os.environ["PGHOST"],
-    'PORT': os.environ["PGPORT"],
+if DEVELOPMENT_MODE is True:
+    DATABASES = {
+        'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'my_db',
+        'USER' : 'elmergonzalez',
+        'PASSWORD' : 'my_db@123',
+        'HOST' : '127.0.0.1',
+        'PORT' : '5432',
+        }
+    }       
+elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
+    if os.getenv("DATABASE_URL", None) is None:
+        raise Exception("DATABASE_URL environment variable not defined")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ["PGDATABASE"],
+            'USER': os.environ["PGUSER"],
+            'PASSWORD': os.environ["PGPASSWORD"],
+            'HOST': os.environ["PGHOST"],
+            'PORT': os.environ["PGPORT"],
+        }
     }
-}
-
-os.environ.setdefault("PGDATABASE", "my_db")
-os.environ.setdefault("PGUSER", "elmergonzalez")
-os.environ.setdefault("PGPASSWORD", "my_db@123")
-os.environ.setdefault("PGHOST", "127.0.0.1")
-os.environ.setdefault("PGPORT", "5432")
-
-# if DEVELOPMENT_MODE is True:
-#     DATABASES = {
-#         'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'my_db',
-#         'USER' : 'elmergonzalez',
-#         'PASSWORD' : 'my_db@123',
-#         'HOST' : '127.0.0.1',
-#         'PORT' : '5432',
-#         }
-#     }
-        
-# elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-#     if os.getenv("DATABASE_URL", None) is None:
-#         raise Exception("DATABASE_URL environment variable not defined")
-#     DATABASES = {
-#         "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
-# }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -298,15 +290,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATIC_URL = '/static/'
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # MEDIA_URL = '/media/' # Base URL to server media files 
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media/') # path where media is stored
 
 # MEDIAFILES_DIRS = [ os.path.join(BASE_DIR, "media") ]
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "/static")]
-STATICFILES_STORAGE="whitenoise.storage.CompressedManifestStaticFilesStorage"
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, "/static")]
+# STATICFILES_STORAGE="whitenoise.storage.CompressedManifestStaticFilesStorage"
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, "static"),
 #     os.path.join(BASE_DIR, "media/static"),
