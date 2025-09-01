@@ -38,7 +38,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'django-insecure-o5cp0zfxp%ke0u0bwjg=y99xng$)!#qqtlo00l*s4!ee4fu@0g'
 
-DEVELOPMENT_MODE =True
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 # DEBUG = True
@@ -229,6 +229,19 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 #     }
 # }
 
+
+
+# DATABASES = {
+#     'default': {
+#     'ENGINE': 'django.db.backends.postgresql',
+#     'NAME': os.environ["PGDATABASE"],
+#     'USER': os.environ["PGUSER"],
+#     'PASSWORD': os.environ["PGPASSWORD"],
+#     'HOST': os.environ["PGHOST"],
+#     'PORT': os.environ["PGPORT"],
+#     }
+# }
+
 # os.environ.setdefault("PGDATABASE", "my_db")
 # os.environ.setdefault("PGUSER", "elmergonzalez")
 # os.environ.setdefault("PGPASSWORD", "my_db@123")
@@ -245,20 +258,20 @@ if DEVELOPMENT_MODE is True:
         'HOST' : '127.0.0.1',
         'PORT' : '5432',
         }
-    }       
+    }
+        
 elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
     if os.getenv("DATABASE_URL", None) is None:
         raise Exception("DATABASE_URL environment variable not defined")
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ["PGDATABASE"],
-            'USER': os.environ["PGUSER"],
-            'PASSWORD': os.environ["PGPASSWORD"],
-            'HOST': os.environ["PGHOST"],
-            'PORT': os.environ["PGPORT"],
-        }
+        'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
+            default=os.environ.get("DATABASE_URL"),
+            conn_max_age=600
+        )
+        # "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
     }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

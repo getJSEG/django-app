@@ -1,0 +1,22 @@
+databases:
+  - name: foureverdb
+    plan: free
+    databaseName: fourever
+    user: fourever_user
+
+services:
+  - type: web
+    plan: free
+    name: fourever
+    runtime: python
+    buildCommand: './build.sh'
+    startCommand: 'python -m gunicorn fourever.asgi:application -k uvicorn.workers.UvicornWorker' 
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foureverdb
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
