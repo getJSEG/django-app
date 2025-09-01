@@ -28,17 +28,7 @@ mimetypes.add_type("text/css", ".css", True)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# EMAIL_USE_TLS = EMAIL_USE_TLS
-# EMAIL_HOST = EMAIL_HOST
-# EMAIL_HOST_USER = EMAIL_HOST_USER
-# EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
-# EMAIL_PORT = EMAIL_PORT
 
-os.environ.setdefault("PGDATABASE", "fourever")
-os.environ.setdefault("PGUSER", "username")
-os.environ.setdefault("PGPASSWORD", "")
-os.environ.setdefault("PGHOST", "localhost")
-os.environ.setdefault("PGPORT", "5432")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -160,7 +150,8 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
-ACCOUNT_AUTHENTICATION_METHOD = 'username'
+
+# ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_USER_MODEL_EMAIL_FIELD = None
 
 LOGIN_URL = '/admin/login/'
@@ -250,6 +241,12 @@ DATABASES = {
     'PORT': os.environ["PGPORT"],
     }
 }
+
+os.environ.setdefault("PGDATABASE", "my_db")
+os.environ.setdefault("PGUSER", "elmergonzalez")
+os.environ.setdefault("PGPASSWORD", "my_db@123")
+os.environ.setdefault("PGHOST", "127.0.0.1")
+os.environ.setdefault("PGPORT", "5432")
 
 # if DEVELOPMENT_MODE is True:
 #     DATABASES = {
