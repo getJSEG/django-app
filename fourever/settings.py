@@ -231,46 +231,46 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 
 
 
-# DATABASES = {
-#     'default': {
-#     'ENGINE': 'django.db.backends.postgresql',
-#     'NAME': os.environ["PGDATABASE"],
-#     'USER': os.environ["PGUSER"],
-#     'PASSWORD': os.environ["PGPASSWORD"],
-#     'HOST': os.environ["PGHOST"],
-#     'PORT': os.environ["PGPORT"],
+DATABASES = {
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': os.environ["PGDATABASE"],
+    'USER': os.environ["PGUSER"],
+    'PASSWORD': os.environ["PGPASSWORD"],
+    'HOST': os.environ["PGHOST"],
+    'PORT': os.environ["PGPORT"],
+    }
+}
+
+os.environ.setdefault("PGDATABASE", "my_db")
+os.environ.setdefault("PGUSER", "elmergonzalez")
+os.environ.setdefault("PGPASSWORD", "my_db@123")
+os.environ.setdefault("PGHOST", "127.0.0.1")
+os.environ.setdefault("PGPORT", "5432")
+
+# if DEVELOPMENT_MODE is True:
+#     DATABASES = {
+#         'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'my_db',
+#         'USER' : 'elmergonzalez',
+#         'PASSWORD' : 'my_db@123',
+#         'HOST' : '127.0.0.1',
+#         'PORT' : '5432',
+#         }
 #     }
-# }
-
-# os.environ.setdefault("PGDATABASE", "my_db")
-# os.environ.setdefault("PGUSER", "elmergonzalez")
-# os.environ.setdefault("PGPASSWORD", "my_db@123")
-# os.environ.setdefault("PGHOST", "127.0.0.1")
-# os.environ.setdefault("PGPORT", "5432")
-
-if DEVELOPMENT_MODE is True:
-    DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'my_db',
-        'USER' : 'elmergonzalez',
-        'PASSWORD' : 'my_db@123',
-        'HOST' : '127.0.0.1',
-        'PORT' : '5432',
-        }
-    }
         
-elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
-    if os.getenv("DATABASE_URL", None) is None:
-        raise Exception("DATABASE_URL environment variable not defined")
-    DATABASES = {
-        'default': dj_database_url.config(
-        # Replace this value with your local database's connection string.
-            default=os.environ.get("DATABASE_URL"),
-            conn_max_age=600
-        )
-        # "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
-    }
+# elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
+#     if os.getenv("DATABASE_URL", None) is None:
+#         raise Exception("DATABASE_URL environment variable not defined")
+#     DATABASES = {
+#         'default': dj_database_url.config(
+#         # Replace this value with your local database's connection string.
+#             default=os.environ.get("DATABASE_URL"),
+#             conn_max_age=600
+#         )
+#         # "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+#     }
 
 
 # Password validation
