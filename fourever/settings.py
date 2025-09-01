@@ -160,6 +160,7 @@ INSTALLED_APPS = [
     'sorl.thumbnail',
     'corsheaders',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -187,7 +188,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'whitenoise.runserver_nostatic',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
@@ -301,15 +301,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-
 # MEDIA_URL = '/media/' # Base URL to server media files 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/') # path where media is stored
 
-MEDIAFILES_DIRS = [
-    os.path.join(BASE_DIR, "media")
-]
-
+# MEDIAFILES_DIRS = [ os.path.join(BASE_DIR, "media") ]
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATICFILES_STORAGE="whitenoise.storage.CompressedManifestStaticFilesStorage"
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, "static"),
 #     os.path.join(BASE_DIR, "media/static"),
