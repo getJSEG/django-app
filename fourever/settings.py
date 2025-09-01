@@ -16,7 +16,6 @@ from corsheaders.defaults import default_headers
 import dj_database_url
 import mimetypes
 import sys #INSTALL THIS Library
-import pyrebase
 import os
 from pathlib import Path
 from dotenv import load_dotenv
