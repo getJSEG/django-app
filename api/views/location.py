@@ -34,7 +34,6 @@ class LocationView(APIView):
         except:
             return Response({"message": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # print(user.location)
         # print(user)
         # if(not user.is_superuser or not user.is_staff):
         #     return Response({"message": "You dont have permission"}, status=status.HTTP_403_FORBIDDEN)

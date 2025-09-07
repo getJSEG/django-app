@@ -11,10 +11,11 @@ from ..models import CustomUser
 # TESTING ONLY
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ['id','username','first_name','last_name', 'is_active', 'avatar', 'location', 'create_on', 'groups']
+        fields = '__all__'
 
 #USER SIGNUP
 class CreateUsersSerializer(serializers.ModelSerializer):
@@ -73,20 +74,20 @@ class CreateUsersSerializer(serializers.ModelSerializer):
 #         return attrs
 
 # update user information
-class UpdateUsersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model= CustomUser
-        fields = ('first_name', 'last_name', 'status_date', 'password', 'avatar')
+# class UpdateUsersSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model= CustomUser
+#         fields = ('first_name', 'last_name', 'status_date', 'password', 'avatar')
 
-    def update(self, instance, validated_data):
-        #Check is the password exits in the validated data
-        if "password" not in validated_data:
-            instance = super().update(instance, validated_data)             #Update eveything that is not a password else
-        else:   
-            password = validated_data.pop('password')                       #pop password
-            if password:
-                instance.set_password(password)                             #hash and update password
-            instance = super().update(instance, validated_data)             #Update eveything that is not a password else
+#     def update(self, instance, validated_data):
+#         #Check is the password exits in the validated data
+#         if "password" not in validated_data:
+#             instance = super().update(instance, validated_data)             #Update eveything that is not a password else
+#         else:   
+#             password = validated_data.pop('password')                       #pop password
+#             if password:
+#                 instance.set_password(password)                             #hash and update password
+#             instance = super().update(instance, validated_data)             #Update eveything that is not a password else
 
-        return instance
+#         return instance
     

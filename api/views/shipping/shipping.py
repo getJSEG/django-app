@@ -321,6 +321,7 @@ class RetriveRecentlyCreatedPackages(APIView):
     customShipppinSerializer = CustomShippinSerialzier
     
     def get(self, request, format=None):
+
         if not request.user.has_perm('api.view_parselshipping') and not request.user.has_perm('api.view_customshipping') :
             return error_responses.permission_denied()
 

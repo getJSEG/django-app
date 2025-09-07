@@ -19,7 +19,8 @@ urlpatterns = [
     # path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('auth/password/reset/', drfa.PasswordResetView.as_view()),
     #user
-    path('employee/create', user.CreateEmployeeView.as_view()),
+    # TODO: chager from employee -> USER
+    path('user/create', user.CreateEmployeeView.as_view()),
     path('logout', user.userLogoutView.as_view()),                                                                   #this only black list the JWT
     path('profile', user.GetUserProfileView.as_view(), name="profile"),
     path('user/update', user.UpdateUserinformationView.as_view()),

@@ -5,7 +5,11 @@ from ...models import Varient, Images, Categories, Tags, Product
 # import helper
 from ...helper import generate_sku
 
+class categoriesSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Categories
+        fields = ['categorie']
 
 # def generate_sku(name, brand, size, description, productId):
 #     sku = ''
@@ -39,7 +43,7 @@ class variantSerializer(serializers.ModelSerializer):
     sku = serializers.StringRelatedField(required=False)
     # product = ProductSerializer()
     # varientImage = ImageSerializer()
-    # categories = categoriesSerializer(many=True, read_only=True)
+    categories = categoriesSerializer(many=True, read_only=True, required=False)
     # tags = tagsSerializer(many=True, read_only=True)
 
     class Meta:

@@ -12,15 +12,15 @@ from ...models import CustomUser
 GROUPS = {
     "Owner": {
         #general permissions
-        "location" : ["add", "change", "view"],
+        "location" : ["change", "view"],
         "discount": ["add", "change", "view", "delete"],
         "avatar": ["add", "change", "view", "delete"],
         "custom user": ["add", "change", "view", "delete"],
 
         #Products
-        "product" : ["add", "change","view", "delete"],
-        "varient" : ["add", "change","view", "delete"],
-        "images" : ["add", "change","view", "delete"], 
+        "product" : ["add", "change", "view", "delete"],
+        "varient" : ["add", "change", "view", "delete"],
+        "images" : ["add", "change", "view", "delete"], 
         "tags": ["add", "change", "view", "delete"],
         "categories": ["add", "change", "view", "delete"],
         "stock transfer" : ["add", "change","view", "delete"],
@@ -49,6 +49,7 @@ GROUPS = {
         "location" : ["view"],
         "discount": ["view"],
         "avatar": ["add", "change", "view", "delete"],
+        "custom user": ["add", "change", "view"],
 
         #Products
         "product" : ["add", "change","view", "delete"],
@@ -82,6 +83,7 @@ GROUPS = {
         "location" : ["view"],
         "discount": ["view"],
         "avatar": ["add", "change", "view", "delete"],
+        "custom user": ["view"],
 
         #Products
         "product" : ["add", "change","view", "delete"],
@@ -99,9 +101,9 @@ GROUPS = {
         "credit card payment" : ["add", "view"],
 
         # shipping and customers
-        "custom shipping" : ["add", "change","view"],
-        "parsel shipping" : ["add", "change","view"],
-        "customer" : ["add", "delete", "change","view"], 
+        "custom shipping" : ["add", "change", "view"],
+        "parsel shipping" : ["add", "change", "view"],
+        "customer" : ["add", "delete", "change", "view"], 
     },
 
     "Accounting": {
@@ -147,9 +149,11 @@ GROUPS = {
 
 
 USERS = {
-    "jenn" : ["Employee","manager@gmail.com","1234"],
+    "jenn" :  ["Employee","manager@gmail.com","1234"],
     "john" :  ["Manager","admin@domain.ca","1234"],
     "admin" : ["Owner","elmer@gmail.com","1234"],
+    "super" : ["super","@gmail.com","1234"],
+
 }
 
 
@@ -172,7 +176,6 @@ class Command(BaseCommand):
                     # codename = "".format()
                     ct = ContentType.objects.get_for_model(CustomUser)
                     print("Creating {}".format(name))
-                    # print(ct)
 
                     try:
                         model_add_perm = Permission.objects.get(name=name)
@@ -192,6 +195,6 @@ class Command(BaseCommand):
                 new_user.set_password(USERS[user_name][2])
                 new_user.save()
 
-                if USERS[user_name][0] == str(new_group) :
+                if USERS[user_name][0] == str(new_group):
                     new_group.user_set.add(new_user)
                     print("Adding {} to {}".format(user_name, new_group))
