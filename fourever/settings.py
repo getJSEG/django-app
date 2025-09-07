@@ -40,13 +40,13 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv("DEBUG", "False") == "True"
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
+# DEBUG = False
 
 
 #This will be UNCOMENTED for Production
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
-# ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = ["localhost", "192.168.8.160"]
 
 # Application definition
@@ -231,34 +231,34 @@ WSGI_APPLICATION = 'fourever.wsgi.application'
 
 
 
-# DATABASES = {
-#     'default': {
-#     'ENGINE': 'django.db.backends.postgresql',
-#     'NAME': os.environ["PGDATABASE"],
-#     'USER': os.environ["PGUSER"],
-#     'PASSWORD': os.environ["PGPASSWORD"],
-#     'HOST': os.environ["PGHOST"],
-#     'PORT': os.environ["PGPORT"],
-#     }
-# }
-
-# os.environ.setdefault("PGDATABASE", "my_db")
-# os.environ.setdefault("PGUSER", "elmergonzalez")
-# os.environ.setdefault("PGPASSWORD", "my_db@123")
-# os.environ.setdefault("PGHOST", "127.0.0.1")
-# os.environ.setdefault("PGPORT", "5432")
-
-# if DEVELOPMENT_MODE is True:
 DATABASES = {
     'default': {
-    'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    'NAME': 'my_db',
-    'USER' : 'elmergonzalez',
-    'PASSWORD' : 'my_db@123',
-    'HOST' : '127.0.0.1',
-    'PORT' : '5432',
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': os.environ["PGDATABASE"],
+    'USER': os.environ["PGUSER"],
+    'PASSWORD': os.environ["PGPASSWORD"],
+    'HOST': os.environ["PGHOST"],
+    'PORT': os.environ["PGPORT"],
     }
 }
+
+os.environ.setdefault("PGDATABASE", "my_db")
+os.environ.setdefault("PGUSER", "elmergonzalez")
+os.environ.setdefault("PGPASSWORD", "my_db@123")
+os.environ.setdefault("PGHOST", "127.0.0.1")
+os.environ.setdefault("PGPORT", "5432")
+
+# if DEVELOPMENT_MODE is True:
+# DATABASES = {
+#     'default': {
+#     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#     'NAME': 'my_db',
+#     'USER' : 'elmergonzalez',
+#     'PASSWORD' : 'my_db@123',
+#     'HOST' : '127.0.0.1',
+#     'PORT' : '5432',
+#     }
+# }
         
 # elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
 #     if os.getenv("DATABASE_URL", None) is None:
