@@ -41,7 +41,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
-# DEBUG = False
+# DEBUG = True
 
 
 #This will be UNCOMENTED for Production
@@ -134,7 +134,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_PATH': '/', 
     'AUTH_COOKIE_SECURE': False,  # Only send cookies over HTTPS
     'AUTH_COOKIE_HTTP_ONLY': True, # Prevent client-side JavaScript access
-    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_SAMESITE': 'None',
     # 'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     "AUTH_HEADER_TYPES": ("Bearer",)
