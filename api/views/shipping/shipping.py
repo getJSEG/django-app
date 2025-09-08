@@ -312,6 +312,7 @@ class TrackShippingView(APIView):
 
 # retrive All packages created the same date
 # This gets all packeges created same day from 9am pst to 6pm pst same day
+# TODO: retrive all tiems. and filter them in the front end
 class RetriveRecentlyCreatedPackages(APIView):
 
     authentication_classes = [CustomAuthentication, JWTAuthentication]
@@ -331,7 +332,9 @@ class RetriveRecentlyCreatedPackages(APIView):
         except:
             return not_assiged_location()
 
-
+        # TODO: FOR RECENTLY CREATED ONLY INCLUDE PROCESSING
+        # AND ALL OTHER WILL BE IN THE OTHER WINDOW
+        # WILL BE FILTERED IN THE FRONT END
         openParselShipping = ParselShipping.objects.filter(location = locationID).filter(dateCreated__date=timezone.now()).exclude(status = "PICKEDUP")
         openCustomShipping = CustomShipping.objects.filter(location = locationID).filter(dateCreated__date=timezone.now()).exclude(status = "DELIVERED")
 

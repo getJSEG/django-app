@@ -132,7 +132,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_REFRESH': 'refresh_token', # Cookie name for refresh token
     'AUTH_COOKIE_DOMAIN': None, 
     'AUTH_COOKIE_PATH': '/', 
-    'AUTH_COOKIE_SECURE': False,  # Only send cookies over HTTPS
+    'AUTH_COOKIE_SECURE': True,  # Only send cookies over HTTPS
     'AUTH_COOKIE_HTTP_ONLY': True, # Prevent client-side JavaScript access
     'AUTH_COOKIE_SAMESITE': 'Lax',
     # 'ROTATE_REFRESH_TOKENS': True,
