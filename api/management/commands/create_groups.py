@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group, ContentType
 from django.contrib.auth.models import Permission
 # from application.api.models. import CusomUserField
 from ...models import CustomUser
-
+import os
 # all name have to be lowercase
 # permission need to be lowercase
 
@@ -149,11 +149,8 @@ GROUPS = {
 
 
 USERS = {
-    "jenn" :  ["Employee","manager@gmail.com","1234"],
-    "john" :  ["Manager","admin@domain.ca","1234"],
-    "admin" : ["Owner","elmer@gmail.com","1234"],
-    "super" : ["super","@gmail.com","1234"],
-
+    os.environ.get("GROUP_NAME_ONE", "") :  [os.environ.get("GROUP_POSITION_ONE", ""),os.environ.get("GROUP_EMAIL_ONE", ""),os.environ.get("GROUP_PASSWRD_ONE", "")],
+    os.environ.get("GROUP_NAME_TWO", "") :  [os.environ.get("GROUP_POSITION_TWO", ""),os.environ.get("GROUP_EMAIL_TWO", ""),os.environ.get("GROUP_PASSWRD_TWO", "")],
 }
 
 

@@ -26,8 +26,8 @@ urlpatterns = [
     path('user/update', user.UpdateUserinformationView.as_view()),
     path('user/roles', user.getUserRoles.as_view()),
     #locations
-    path('location/create', location.CreateLocationView.as_view()),
-    path('location', location.LocationView.as_view()),
+    # path('location/create', location.CreateLocationView.as_view()),
+    path('location', location.LocationView.as_view(), name="location"),
     path('location/search',location.SearchLocation.as_view()),
     path('location/delete/<str:pk>', location.DeleteLocationView.as_view()),
     path('location/update', location.UpdateLocationView.as_view()),
