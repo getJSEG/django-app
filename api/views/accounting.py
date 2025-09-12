@@ -149,9 +149,12 @@ class salesbyCategory(APIView):
             orders = Order.objects.filter(location_id = location_id, dateCreated__date=datetime.now().date()) 
             if orders.exists():
                 # sum all revenues that are shipping
-                shipping_revenue = orders.filter(paymentExecution="SHIPPING").aggregate(total=Sum("totalAmount"))["total"]
+                shipping_revenue = orders.filter(paymentExecution="SHIPPING").aggregate(total=Sum("totalAmount"))["total"] 
+                shipping_revenue = 0 if shipping_revenue is None else shipping_revenue
                 # sum all revenues that are total sales
-                instore_revenue = orders.filter(paymentExecution="POS").aggregate(total=Sum("totalAmount"))["total"]
+                instore_revenue = orders.filter(paymentExecution="POS").aggregate(total=Sum("totalAmount"))["total"] or 0
+                shipping_revenue = 0 if instore_revenue is None else instore_revenue
+
                 total_store_revenue = shipping_revenue + instore_revenue
                 revenue = {
                     "shippingRevenue": shipping_revenue,

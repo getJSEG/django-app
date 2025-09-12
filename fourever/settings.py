@@ -41,7 +41,6 @@ SECRET_KEY = os.getenv("DJANGO_SECRETE_KEY", get_random_secret_key())
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
-# DEBUG = True
 
 
 #This will be UNCOMENTED for Production
@@ -108,7 +107,6 @@ REST_AUTH = {
     'JWT_AUTH_RETURN_EXPIRATION': False
 }
 
-# os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
 
 CACHES = {
     "default": {
@@ -121,7 +119,6 @@ CACHES = {
         }
     }
 }
-
 CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 
@@ -243,7 +240,7 @@ DATABASES = {
 }
 
 os.environ.setdefault("PGDATABASE", "my_db")
-os.environ.setdefault("PGUSER", "elmergonzalez")
+os.environ.setdefault("PGUSER", "eg")
 os.environ.setdefault("PGPASSWORD", "my_db@123")
 os.environ.setdefault("PGHOST", "127.0.0.1")
 os.environ.setdefault("PGPORT", "5432")
