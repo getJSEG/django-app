@@ -62,6 +62,9 @@ class VariantSerializer(WritableNestedModelSerializer):
 
     #     return variant
 
+
+
+
 class productSerializer(WritableNestedModelSerializer):
     variants = VariantSerializer(many=True)
     total_varients = serializers.IntegerField(read_only=True)
@@ -88,7 +91,7 @@ class productSerializer(WritableNestedModelSerializer):
     
     # # This updates the name  and all of the Sku items relates to this product
     def update(self, instance, validated_data):
-        variants_data =  validated_data.pop('variants', )
+        variants_data =  validated_data.pop('variants',[])
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -96,18 +99,22 @@ class productSerializer(WritableNestedModelSerializer):
 
         existing_children_ids = [child.id for child in instance.variants.all()]
         incoming_children_ids = []
+
+        # TODO: if theirs a variante remvoe evrything here 
+        # variants are not updated here
         # If the user provides a child id then update all the field that where provided.
-        for variant in variants_data:
-            child_id = variant.get('id')
-            if child_id:
-                # Update existing child
-                child = Varient.objects.get(pk=child_id)
-                for key, value in variant.items():
-                    setattr(child, key, value)
-                child.save()
-                incoming_children_ids.append(child_id)
-                #Add Create if the product does not have a 'ID'
-        # 
+        # for variant in variants_data:
+        #     child_id = variant.get('id')
+        #     if child_id:
+        #         # Update existing child
+        #         child = Varient.objects.get(pk=child_id)
+        #         for key, value in variant.items():
+        #             setattr(child, key, value)
+        #         child.save()
+        #         incoming_children_ids.append(child_id)
+        #         #Add Create if the product does not have a 'ID'
+
+        # if the name or brand is changed then ALL of the variant's SKU need to be updated as well.
         if 'name' or 'brand' in validated_data:
             for child_id in set(existing_children_ids) - set(incoming_children_ids):
                 child = Varient.objects.get(id=child_id)

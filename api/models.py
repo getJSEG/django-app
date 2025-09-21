@@ -427,7 +427,7 @@ class ExpenseTypes(models.Model):
     expense_type = models.CharField(max_length=100)
 
 
-# Alll purchase orders from current store
+# All purchase orders from current store
 class PurchaseOrder(models.Model):
     PROCESSING = "Procesando"
     purchaseOrder_Choices = [

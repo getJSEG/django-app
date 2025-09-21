@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework import status
 from rest_framework.response import Response
 from django.db import transaction
@@ -10,21 +11,18 @@ from datetime import datetime, timedelta, date, time
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from django.db.models import Q, Sum, F
-from dateutil import rrule
-import calendar
-from django.db.models import Prefetch
-
+# from dateutil import rrule
+# import calendar
+# from django.db.models import Prefetch
 from django.db.models import Sum
 
 #MODELS
 from ..models import  PurchaseOrder, Expense
-
 from ..models import  Order
 
-from ..repeated_responses.repeated_responses import not_assiged_location, denied_permission, emptyField
-
+from ..repeated_responses.repeated_responses import not_assiged_location, denied_permission
 from ..serializers import accounting_serializer
-
+from ..serializers.Order.order_serializer import SalesReceiptSerializer
 
 # this gets all of the income by month
 # from Jan - Dec ( month name in spanish)
@@ -401,6 +399,24 @@ class PurchaseOrderView(APIView):
 
 
 
+
+
+# get transactions by customer
+
+# class Transaction():
+
+#     authentication_classes = [CustomAuthentication, JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     serializer_class =  pos_serializer.TransactionReceiptSerializer
+
+#     def get(self, request, format=None):
+#         if not request.user.has_perm('api.view_transactionreceipt'):
+#             return denied_permission()
+        
+
+        
+        # retunr all transcation by month
 # Get all Recipts
 # Categorize them by the selections
 # getting all trasactions for that day
@@ -640,35 +656,36 @@ class PurchaseOrderView(APIView):
     
 
 
-# Trans History
-# TODO: Ad UUID
-# class TransactionHistory(ListAPIView):
+# look up by month and default is current month
+class TransactionHistory(ListAPIView):
    
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
-#     queryset =  TransactionReceipt.objects.all().order_by('date_created')
-#     serializer_class =  pos_serializer.TransactionReceiptSerializer
+    queryset =  Order.objects.all().order_by('dateCreated')
+    serializer_class = SalesReceiptSerializer
 
-#     def  get(self, request, format=None):
+    def get(self, request, format=None):
+        # checking permission
+        if not request.user.has_perm('api.view_order'):
+            return denied_permission()
 
-#         if not request.user.has_perm('api.view_transactionreceipt'):
-#             return denied_permission()
+        # checking if the user has a location 
+        try:
+            location =  request.user.location.id
+        except:
+            return not_assiged_location() 
 
-#         try:
-#             location =  request.user.location.id
-#         except:
-#             return not_assiged_location()
+        month = request.GET.get("month", 1)
+        year = request.GET.get("year", datetime.now().year)
 
-#         # TODO: FOR DATE TIME , JUST REDUCE TO MONTH/DAY/YEAR
-#         queryset = self.queryset.filter(order__location_id = location, date_created__date=datetime.now().date())
-
-#         queryset = queryset.annotate(date=TruncDate('date_created'))
-
-#         if not queryset.exists():
-#             return Response({'data': []}, status=status.HTTP_204_NO_CONTENT)
+        # check for month and year
+        # TODO: FOR DATE TIME , JUST REDUCE TO MONTH/DAY/YEAR
+        # queryset = Order.objects.filter(location_id = location, dateCreated__date=datetime.now().date())
+        queryset = self.queryset.filter(location_id = location, dateCreated__month=month, dateCreated__year = year)
+        if not queryset.exists():
+            return Response({'data': []}, status=status.HTTP_204_NO_CONTENT)
         
-#         # results =  self.paginate_queryset(productsAttr, request, view=self)
-#         serializer = self.serializer_class(queryset, many=True)
+        serializer = self.serializer_class(queryset, many=True)
 
-#         return Response(serializer.data , status=status.HTTP_200_OK)
+        return Response(serializer.data , status=status.HTTP_200_OK)

@@ -36,7 +36,6 @@ urlpatterns = [
     path('products', product.RetriveProducts.as_view(), name="retrive_product"),
     path('product/stock-level', product.LowStockLevel.as_view()),  
     path('product/search', product.SearchProducts.as_view(), name="search_product"),                                                  # Search products by name
-    path('product/update/', product.UpdateProductView.as_view(), name="update_product"),                                     # updating the Product Info Only
     path('product/delete/<str:pk>', product.DeleteProductView.as_view(), name="delete_product"),                             # Deleting the produt and its varients
     #varients
     path('product/varient', varients.VarientView.as_view()),                                   # Creating a varient with product ID
@@ -51,7 +50,7 @@ urlpatterns = [
     # Accounting
     path('accounting/revenue', accounting.IncomeView.as_view()),
     path('accounting/sales-by-category', accounting.salesbyCategory.as_view()),
-    # path('accounting/transaction-history', accounting.TransactionHistory.as_view()),
+    path('transaction-history', accounting.TransactionHistory.as_view()),
     path('accounting/purchaseOrder', accounting.PurchaseOrderView.as_view()),
     path('accounting/expenses', accounting.ExpensesView.as_view()),
 
@@ -60,6 +59,7 @@ urlpatterns = [
     path('shipping/parcel', shipping.ParselShippingView.as_view()),
     path('shipping/tracker', shipping.TrackShippingView.as_view()), #change to retrive all-packages
     path('packages/recently-created', shipping.RetriveRecentlyCreatedPackages.as_view()),
+    
     #DISCOUNT
     path('discount', discount.GetDiscountView.as_view()),
     path('create/discount', discount.CreateDiscountView.as_view()),

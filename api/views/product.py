@@ -21,12 +21,38 @@ from ..repeated_responses.repeated_responses import not_assiged_location, emptyF
 # This Creates a Product
 from ..authenticate import CustomAuthentication
 
+
+
+# get, create, update 
 class ProductView(APIView):
     authentication_classes = [CustomAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     productSerializer = product_serializer.productSerializer
+    # get single product
+    def get(self, request, format=None):
+        user = request.user
 
+        productId = request.GET.get('product') 
+
+        if not user.has_perm('api.view_product'):
+            return denied_permission()
+        # Check if the id is valid
+        try: uuid.UUID(productId, version=4)     
+        except: return invalid_uuid()
+
+        if not user.location:
+            return not_assiged_location()
+        # This filter the product only base on the employee location
+        product = Product.objects.filter(location_id = user.location, id=productId).prefetch_related("variants")
+        
+        if not product.exists():
+            return does_not_exists()
+        
+        prodSerializer = self.productSerializer(product, many=True)
+            
+        return Response(prodSerializer.data[0], status=status.HTTP_200_OK)
+    # create product
     def post(self, request, format=None):
 
         user = request.user
@@ -98,30 +124,47 @@ class ProductView(APIView):
         return Response({ "data": { "message":  "Producto Creado Exitosamente",
                                     "productId": serializer.data['id'], 
                                     "upload": presignedUrlList}}, status=status.HTTP_201_CREATED)
-   
-    # This Retrive Single Product
-    def get(self, request, format=None):
+    
+    # update single product
+    def patch(self, request, format=None):
         user = request.user
-
-        productId = request.GET.get('product') 
-
-        if not user.has_perm('api.view_product'):
+         # Check Permission for the user
+        if not user.has_perm('api.change_product'):
             return denied_permission()
-        # Check if the id is valid
-        try: uuid.UUID(productId, version=4)     
-        except: return invalid_uuid()
-
-        if not user.location:
-            return not_assiged_location()
-        # This filter the product only base on the employee location
-        product = Product.objects.filter(location_id = user.location, id=productId).prefetch_related("variants")
         
-        if not product.exists():
+        # Getting the product from the query
+        productId = request.GET.get('product', "")
+
+        # check for validity of Uuid
+        try: 
+            uuid.UUID(productId, version=4)     
+        except:
+            return invalid_uuid()
+                                                               
+        data = request.data.copy()
+        try:
+            product = Product.objects.get(Q(id=productId))
+        except:
             return does_not_exists()
         
-        prodSerializer = self.productSerializer(product, many=True)
-            
-        return Response(prodSerializer.data[0], status=status.HTTP_200_OK)
+        serializer = self.productSerializer(instance=product, data=data, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        else:
+            return Response({"details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({'details': 'Actualizado'} ,status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
 
 
 #TODO: DELETE THIS VIEW
@@ -198,43 +241,6 @@ class SearchProducts(APIView, PageNumberPagination):
 
         return Response(response.data, status=status.HTTP_200_OK)
 
-
-#This view Updates only the product model, and updated the sku attached to this product
-class UpdateProductView(APIView):
-
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    prodSerialzer = product_serializer.productSerializer
-
-    def patch(self, request, format=None):
-        user = request.user
-        # Getting the product from the query
-        productId = request.GET.get('product') 
-         # Check Permission for the user
-        if not user.has_perm('api.change_product'):
-            return denied_permission()
-        
-        # check for validity of Uuid
-        try: 
-            uuid.UUID(productId, version=4)     
-        except:
-            return invalid_uuid()
-                                                               
-        data = request.data.copy()
-        product = Product.objects.filter(Q(id=productId))
-        
-        if not product.exists():
-            return does_not_exists()
-        
-        serializer = self.prodSerialzer(instance=product[0], data=data, partial=True)
-
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-        else:
-            return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response({'message': 'Updated'} ,status=status.HTTP_200_OK)
 
 
 

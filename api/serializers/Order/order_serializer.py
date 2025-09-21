@@ -120,10 +120,15 @@ class SalesReceiptSerializer(WritableNestedModelSerializer):
     ccPayment = CreditCardPaymentSerializer(required=False)
     btPayment = BankTransferPaymentSerializer(required=False)
 
+    
+    cash = CashPaymentSerializer(source="cashpayment_set", many=True, read_only=True)
+    creditcard = CreditCardPaymentSerializer(source="creditcardpayment_set", many=True, read_only=True)
+    banktransfer = BankTransferPaymentSerializer(source="banktransferpayment_set", many=True, read_only=True)
+
     class Meta:
         model = Order
         fields = '__all__'
-
+        
     def validate(self, data):
         items = data.get('OrderLine', None)
         grand_total = data.get('totalAmount')

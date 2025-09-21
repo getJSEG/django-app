@@ -21,12 +21,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # from decouple import config
-
 mimetypes.add_type("text/css", ".css", True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 
 # Quick-start development settings - unsuitable for production
@@ -44,14 +42,12 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
 #This will be UNCOMENTED for Production
-# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
+# ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = ["localhost", "192.168.8.160"]
 
 # Application definition
-WHITENOISE_MIMETYPES = {
-    '.xsl': 'application/xml'
-}
+WHITENOISE_MIMETYPES = { '.xsl': 'application/xml' }
 
 # if not DEBUG:
 # REST_FRAMEWORK = {
