@@ -42,8 +42,8 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
 #This will be UNCOMENTED for Production
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
-# ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOST", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = ["localhost", "192.168.8.160"]
 
 # Application definition
